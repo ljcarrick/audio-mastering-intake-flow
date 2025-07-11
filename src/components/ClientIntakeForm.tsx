@@ -22,6 +22,8 @@ interface MixFile {
   id: string;
   url: string;
   description: string;
+  title?: string;
+  isLoading?: boolean;
 }
 
 export function ClientIntakeForm() {
@@ -89,6 +91,14 @@ export function ClientIntakeForm() {
       file.id === id ? { ...file, [field]: value } : file
     );
     setMixFiles(updatedFiles);
+
+    // If updating URL and it's a valid link, fetch the title
+    if (field === 'url' && value) {
+      const validation = validateFileLink(value);
+      if (validation.isValid) {
+        fetchLinkTitle(value, id);
+      }
+    }
   };
 
   const toggleMasterFormat = (format: string) => {
@@ -128,6 +138,52 @@ export function ClientIntakeForm() {
     
     console.log("No valid service detected");
     return { isValid: false, service: null };
+  };
+
+  const fetchLinkTitle = async (url: string, fileId: string) => {
+    // Set loading state
+    setMixFiles(files => files.map(file => 
+      file.id === fileId ? { ...file, isLoading: true } : file
+    ));
+
+    try {
+      // Simple title extraction from common patterns
+      if (url.includes("dropbox.com")) {
+        // Extract folder name from Dropbox URL path
+        const matches = url.match(/\/([^\/]+)\?/);
+        if (matches) {
+          const folderName = decodeURIComponent(matches[1]);
+          setMixFiles(files => files.map(file => 
+            file.id === fileId ? { ...file, title: folderName, isLoading: false } : file
+          ));
+          return;
+        }
+      }
+      
+      // For drive.google.com links, extract from different patterns
+      if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
+        setMixFiles(files => files.map(file => 
+          file.id === fileId ? { ...file, title: "Google Drive Folder", isLoading: false } : file
+        ));
+        return;
+      }
+
+      // For wetransfer links
+      if (url.includes("wetransfer.com") || url.includes("we.tl")) {
+        setMixFiles(files => files.map(file => 
+          file.id === fileId ? { ...file, title: "WeTransfer Files", isLoading: false } : file
+        ));
+        return;
+      }
+
+    } catch (error) {
+      console.error("Error fetching title:", error);
+    }
+
+    // Fallback - remove loading state
+    setMixFiles(files => files.map(file => 
+      file.id === fileId ? { ...file, isLoading: false } : file
+    ));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -326,13 +382,35 @@ export function ClientIntakeForm() {
                               placeholder="Dropbox/Drive link or file URL"
                               className="bg-input border-border pr-20"
                             />
-                            {validation.isValid && (
+                            {(validation.isValid || mixFile.isLoading) && (
                               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                 <Cloud className="h-4 w-4 text-primary" />
-                                <Check className="h-4 w-4 text-green-500" />
+                                {validation.isValid && <Check className="h-4 w-4 text-green-500" />}
                               </div>
                             )}
                           </div>
+                          
+                          {/* Show title if available */}
+                          {mixFile.title && (
+                            <div className="p-2 bg-accent/50 rounded border border-border animate-fade-in">
+                              <div className="flex items-center gap-2">
+                                <Cloud className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-medium">{mixFile.title}</span>
+                                <Check className="h-4 w-4 text-green-500" />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Loading state */}
+                          {mixFile.isLoading && (
+                            <div className="p-2 bg-accent/30 rounded border border-border">
+                              <div className="flex items-center gap-2">
+                                <Cloud className="h-4 w-4 text-primary animate-pulse" />
+                                <span className="text-sm text-muted-foreground">Loading title...</span>
+                              </div>
+                            </div>
+                          )}
+                          
                           {mixFile.id !== "mix-1" && (
                             <Input
                               value={mixFile.description}
