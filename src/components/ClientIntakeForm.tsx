@@ -26,9 +26,12 @@ interface MixFile {
   isLoading?: boolean;
 }
 
-interface TeamMember {
+interface Contact {
   id: string;
-  role: string;
+  name: string;
+  email: string;
+  phone: string;
+  billTo: boolean;
 }
 
 interface BillingInfo {
@@ -47,15 +50,9 @@ export function ClientIntakeForm() {
   const [deadline, setDeadline] = useState("");
   const [isRush, setIsRush] = useState(false);
   const [projectNotes, setProjectNotes] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("");
-  const [hasTeamMembers, setHasTeamMembers] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: "team-1", role: "" },
-    { id: "team-2", role: "" }
+  const [contacts, setContacts] = useState<Contact[]>([
+    { id: "contact-1", name: "", email: "", phone: "", billTo: false }
   ]);
-  const [billToSelf, setBillToSelf] = useState(true);
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "" });
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
@@ -95,22 +92,56 @@ export function ClientIntakeForm() {
     setTracks(updatedTracks);
   };
 
-  const updateTeamMember = (index: number, role: string) => {
-    const updatedMembers = [...teamMembers];
-    updatedMembers[index] = { ...updatedMembers[index], role };
-    setTeamMembers(updatedMembers);
+  const addContact = () => {
+    const newContact: Contact = {
+      id: `contact-${contacts.length + 1}`,
+      name: "",
+      email: "",
+      phone: "",
+      billTo: false
+    };
+    setContacts([...contacts, newContact]);
+  };
+
+  const removeContact = (id: string) => {
+    if (contacts.length > 1) {
+      setContacts(contacts.filter(contact => contact.id !== id));
+    }
+  };
+
+  const updateContact = (id: string, field: keyof Contact, value: string | boolean) => {
+    const updatedContacts = contacts.map(contact => {
+      if (contact.id === id) {
+        const updatedContact = { ...contact, [field]: value };
+        
+        // If billTo is being set to true, set all others to false and copy data to billing
+        if (field === 'billTo' && value === true) {
+          // First set all other contacts' billTo to false
+          const resetContacts = contacts.map(c => ({ ...c, billTo: false }));
+          const finalContacts = resetContacts.map(c => 
+            c.id === id ? updatedContact : c
+          );
+          
+          // Copy contact data to billing info
+          setBillingInfo({
+            name: updatedContact.name,
+            email: updatedContact.email
+          });
+          
+          return updatedContact;
+        }
+        
+        return updatedContact;
+      }
+      return contact;
+    });
+    
+    setContacts(updatedContacts);
   };
 
   const updateBillingInfo = (field: keyof BillingInfo, value: string) => {
     setBillingInfo(prev => ({ ...prev, [field]: value }));
   };
-
-  // Auto-fill billing info when "Bill To" is checked
-  useEffect(() => {
-    if (billToSelf) {
-      setBillingInfo({ name: artist, email });
-    }
-  }, [billToSelf, artist, email]);
 
   const addMixFile = () => {
     const newMixFile: MixFile = {
@@ -231,14 +262,16 @@ export function ClientIntakeForm() {
       newErrors.title = `${projectType === "ep" ? "EP" : "Album"} title is required`;
     }
 
-    if (!email) {
-      newErrors.email = "Email address is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (!role) {
-      newErrors.role = "Role is required";
+    // Validate contacts
+    if (contacts.length === 0) {
+      newErrors.contacts = "At least one contact is required";
+    } else {
+      const hasValidContact = contacts.some(contact => 
+        contact.name.trim() && contact.email.trim() && /\S+@\S+\.\S+/.test(contact.email)
+      );
+      if (!hasValidContact) {
+        newErrors.contacts = "At least one contact must have a name and valid email";
+      }
     }
 
     if (!billingInfo.name.trim()) {
@@ -274,13 +307,15 @@ export function ClientIntakeForm() {
   };
 
   const isFormValid = () => {
+    const hasValidContact = contacts.some(contact => 
+      contact.name.trim() && contact.email.trim() && /\S+@\S+\.\S+/.test(contact.email)
+    );
+    
     return (
       projectType &&
       artist.trim() &&
       (projectType === "single" || title.trim()) &&
-      email &&
-      /\S+@\S+\.\S+/.test(email) &&
-      role &&
+      hasValidContact &&
       billingInfo.name.trim() &&
       billingInfo.email &&
       /\S+@\S+\.\S+/.test(billingInfo.email) &&
@@ -427,20 +462,23 @@ export function ClientIntakeForm() {
             ${hasISRCs ? '<p style="margin-top: 12px; font-size: 14px; color: #6b7280;">✓ Client has ISRC codes to embed</p>' : ''}
         </div>
 
-        <div class="section">
+         <div class="section">
             <div class="section-title">📞 Contact Information</div>
+            ${contacts.filter(c => c.name || c.email).map(c => `
             <div class="field-group">
                 <div class="field">
-                    <div class="field-label">Email</div>
-                    <div class="field-value"><a href="mailto:${email}" style="color: #2563eb;">${email}</a></div>
+                    <div class="field-label">${c.name}</div>
+                    <div class="field-value"><a href="mailto:${c.email}" style="color: #2563eb;">${c.email}</a></div>
                 </div>
-                ${phone ? `
+                ${c.phone ? `
                 <div class="field">
                     <div class="field-label">Phone</div>
-                    <div class="field-value"><a href="tel:${phone}" style="color: #2563eb;">${phone}</a></div>
+                    <div class="field-value"><a href="tel:${c.phone}" style="color: #2563eb;">${c.phone}</a></div>
                 </div>` : ''}
             </div>
-        </div>
+            ${c.billTo ? '<p style="margin-top: 8px; font-size: 12px; color: #6b7280;">📧 Billing Contact</p>' : ''}
+            `).join('')}
+         </div>
 
         ${projectNotes ? `
         <div class="section">
@@ -467,10 +505,9 @@ export function ClientIntakeForm() {
         project_title: title || 'N/A',
         project_type: projectType.toUpperCase(),
         num_tracks: numTracks,
-        email: email,
-        phone: phone || 'Not provided',
-        role: role,
-        team_members: hasTeamMembers ? teamMembers.filter(m => m.role).map(m => m.role).join(', ') : 'None',
+        contacts_info: contacts.filter(c => c.name || c.email).map(c => 
+          `${c.name} - ${c.email}${c.phone ? ` - ${c.phone}` : ''}${c.billTo ? ' (Bill To)' : ''}`
+        ).join('\n'),
         billing_name: billingInfo.name,
         billing_email: billingInfo.email,
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
@@ -517,15 +554,10 @@ export function ClientIntakeForm() {
       setHasISRCs(false);
       setDeadline("");
       setIsRush(false);
-      setRole("");
-      setHasTeamMembers(false);
-      setTeamMembers([{ id: "team-1", role: "" }, { id: "team-2", role: "" }]);
-      setBillToSelf(true);
+      setContacts([{ id: "contact-1", name: "", email: "", phone: "", billTo: false }]);
       setBillingInfo({ name: "", email: "" });
       setMasterFormats([]);
       setProjectNotes("");
-      setEmail("");
-      setPhone("");
       setHoneypot("");
       setHoneypot2("");
       setErrors({});
@@ -902,95 +934,89 @@ export function ClientIntakeForm() {
               <User className="h-5 w-5 text-black" />
               Contact Information
             </h2>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-black">Your Email Address *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className={`pl-10 bg-white border-gray-300 rounded-sm ${errors.email ? 'border-red-500' : ''}`}
-                      required
-                    />
-                  </div>
-                  {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-black">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="xxxx-xxx-xxx"
-                      className="pl-10 bg-white border-gray-300 rounded-sm"
-                    />
-                  </div>
-                </div>
+            
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Name *</th>
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Email *</th>
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Phone</th>
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Bill To</th>
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contacts.map((contact, index) => (
+                      <tr key={contact.id} className="border-b border-gray-100">
+                        <td className="py-3 px-3">
+                          <Input
+                            value={contact.name}
+                            onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
+                            placeholder="Full name"
+                            className="bg-white border-gray-300 rounded-sm"
+                          />
+                        </td>
+                        <td className="py-3 px-3">
+                          <Input
+                            type="email"
+                            value={contact.email}
+                            onChange={(e) => updateContact(contact.id, 'email', e.target.value)}
+                            placeholder="email@example.com"
+                            className="bg-white border-gray-300 rounded-sm"
+                          />
+                        </td>
+                        <td className="py-3 px-3">
+                          <Input
+                            type="tel"
+                            value={contact.phone}
+                            onChange={(e) => updateContact(contact.id, 'phone', e.target.value)}
+                            placeholder="Phone number"
+                            className="bg-white border-gray-300 rounded-sm"
+                          />
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <Checkbox
+                            checked={contact.billTo}
+                            onCheckedChange={(checked) => updateContact(contact.id, 'billTo', checked === true)}
+                          />
+                        </td>
+                        <td className="py-3 px-3">
+                          {contacts.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeContact(contact.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-sm font-medium text-black">Role *</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.role ? 'border-red-500' : ''}`}>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="artist">Artist</SelectItem>
-                    <SelectItem value="mixer">Mixer</SelectItem>
-                    <SelectItem value="label">Label</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.role && <p className="text-sm text-red-600">{errors.role}</p>}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="team-members"
-                  checked={hasTeamMembers}
-                  onCheckedChange={(checked) => setHasTeamMembers(checked === true)}
-                />
-                <Label htmlFor="team-members">Add team members (up to 2)</Label>
-              </div>
-
-              {hasTeamMembers && (
-                <div className="space-y-3 pl-6 border-l-2 border-gray-200">
-                  {teamMembers.map((member, index) => (
-                    <div key={member.id}>
-                      <Label htmlFor={`team-${index}`} className="text-sm font-medium text-black">
-                        Team Member {index + 1} Role
-                      </Label>
-                      <Select value={member.role} onValueChange={(value) => updateTeamMember(index, value)}>
-                        <SelectTrigger className="bg-white border-gray-300 rounded-sm">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="artist">Artist</SelectItem>
-                          <SelectItem value="mixer">Mixer</SelectItem>
-                          <SelectItem value="label">Label</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ))}
-                </div>
+              
+              {errors.contacts && (
+                <p className="text-sm text-red-600 mt-2">
+                  <AlertCircle className="inline-block w-4 h-4 mr-1" />
+                  {errors.contacts}
+                </p>
               )}
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="bill-to"
-                  checked={billToSelf}
-                  onCheckedChange={(checked) => setBillToSelf(checked === true)}
-                />
-                <Label htmlFor="bill-to">Bill To</Label>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addContact}
+                className="mt-4"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Team Member
+              </Button>
             </div>
           </div>
 
@@ -1011,7 +1037,6 @@ export function ClientIntakeForm() {
                     onChange={(e) => updateBillingInfo('name', e.target.value)}
                     placeholder="Billing name"
                     className={`bg-white border-gray-300 rounded-sm ${errors.billingName ? 'border-red-500' : ''}`}
-                    disabled={billToSelf}
                   />
                   {errors.billingName && <p className="text-sm text-red-600">{errors.billingName}</p>}
                 </div>
@@ -1025,10 +1050,13 @@ export function ClientIntakeForm() {
                     onChange={(e) => updateBillingInfo('email', e.target.value)}
                     placeholder="billing@email.com"
                     className={`bg-white border-gray-300 rounded-sm ${errors.billingEmail ? 'border-red-500' : ''}`}
-                    disabled={billToSelf}
                   />
                   {errors.billingEmail && <p className="text-sm text-red-600">{errors.billingEmail}</p>}
                 </div>
+              </div>
+              
+              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-sm">
+                <strong>Tip:</strong> Check "Bill To" next to a contact above to auto-fill billing information, or enter manually.
               </div>
             </div>
           </div>
