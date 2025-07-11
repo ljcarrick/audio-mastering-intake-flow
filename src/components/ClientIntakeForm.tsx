@@ -270,7 +270,7 @@ export function ClientIntakeForm() {
               {/* Mix Files */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Mix File Links</Label>
+                  <Label>Dropbox/Drive Link</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -279,7 +279,7 @@ export function ClientIntakeForm() {
                     className="border-border"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add More Files
+                    Add More Links
                   </Button>
                 </div>
                 <div className="space-y-3">
@@ -394,12 +394,11 @@ export function ClientIntakeForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Project Notes / Preferences</Label>
+                <Label htmlFor="notes">Project Notes / Preferences (optional)</Label>
                 <Textarea
                   id="notes"
                   value={projectNotes}
                   onChange={(e) => setProjectNotes(e.target.value)}
-                  placeholder="Tell us about your artistic vision, reference tracks, specific requirements, or any other details..."
                   rows={4}
                   className="bg-input border-border"
                 />
