@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink, Cloud, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import emailjs from '@emailjs/browser';
 
 type ProjectType = "single" | "ep" | "album" | "";
 
@@ -259,56 +260,188 @@ export function ClientIntakeForm() {
     setIsSubmitting(true);
 
     try {
-      // Prepare formatted email content
-      const emailContent = `
-NEW MASTERING REQUEST - ${new Date().toLocaleDateString()}
+      // Create rich HTML email content
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; color: #111827; background-color: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { background: #111827; color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 1px; }
+        .section { padding: 25px; border-bottom: 1px solid #e5e7eb; }
+        .section:last-child { border-bottom: none; }
+        .section-title { font-size: 18px; font-weight: 500; color: #111827; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .field { }
+        .field-label { font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .field-value { font-size: 14px; color: #111827; font-weight: 400; }
+        .track-list { margin-top: 10px; }
+        .track-item { background: #f9fafb; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #111827; }
+        .track-number { font-weight: 600; color: #111827; }
+        .formats-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .format-tag { background: #111827; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .file-link { color: #2563eb; text-decoration: none; word-break: break-all; }
+        .file-link:hover { text-decoration: underline; }
+        .rush-badge { background: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
+        .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
+        @media (max-width: 600px) {
+            .field-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LC - Mastering Request</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.8;">${new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            })}</p>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">🎵 Project Details</div>
+            <div class="field-group">
+                <div class="field">
+                    <div class="field-label">Artist</div>
+                    <div class="field-value">${artist}</div>
+                </div>
+                ${title ? `
+                <div class="field">
+                    <div class="field-label">${projectType === "ep" ? "EP" : projectType === "album" ? "Album" : "Project"} Title</div>
+                    <div class="field-value">${title}</div>
+                </div>` : ''}
+            </div>
+            <div class="field-group">
+                <div class="field">
+                    <div class="field-label">Project Type</div>
+                    <div class="field-value">${projectType.toUpperCase()}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Number of Tracks</div>
+                    <div class="field-value">${numTracks}</div>
+                </div>
+            </div>
+            ${deadline ? `
+            <div class="field-group">
+                <div class="field">
+                    <div class="field-label">Preferred Deadline</div>
+                    <div class="field-value">${new Date(deadline).toLocaleDateString()}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Priority</div>
+                    <div class="field-value">${isRush ? '<span class="rush-badge">Rush Order</span>' : 'Standard'}</div>
+                </div>
+            </div>` : isRush ? `
+            <div class="field">
+                <div class="field-label">Priority</div>
+                <div class="field-value"><span class="rush-badge">Rush Order</span></div>
+            </div>` : ''}
+        </div>
 
-PROJECT DETAILS:
-• Artist: ${artist}
-${title ? `• ${projectType === "ep" ? "EP" : projectType === "album" ? "Album" : "Project"} Title: ${title}` : ''}
-• Project Type: ${projectType}
-• Number of Tracks: ${numTracks}
-• Rush Order: ${isRush ? 'Yes' : 'No'}
-${deadline ? `• Preferred Deadline: ${deadline}` : ''}
+        <div class="section">
+            <div class="section-title">🎼 Track List / Order</div>
+            <div class="track-list">
+                ${tracks.map((track, i) => `
+                <div class="track-item">
+                    <span class="track-number">${i + 1}.</span> ${track.title}
+                    ${hasISRCs && track.isrc ? `<br><small style="color: #6b7280;">ISRC: ${track.isrc}</small>` : ''}
+                </div>`).join('')}
+            </div>
+        </div>
 
-TRACKS:
-${tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n')}
+        <div class="section">
+            <div class="section-title">📁 Project Files</div>
+            ${mixFiles.filter(file => file.url).map((file, i) => `
+            <div style="margin-bottom: 12px;">
+                <div class="field-label">File ${i + 1}</div>
+                <div class="field-value">
+                    <a href="${file.url}" class="file-link" target="_blank">${file.url}</a>
+                    ${file.description ? `<br><small style="color: #6b7280;">${file.description}</small>` : ''}
+                </div>
+            </div>`).join('')}
+        </div>
 
-FILES:
-${mixFiles.filter(file => file.url).map((file, i) => `${i + 1}. ${file.url}${file.description ? ` - ${file.description}` : ''}`).join('\n')}
+        <div class="section">
+            <div class="section-title">🎚️ Required Master Formats</div>
+            <div class="formats-list">
+                ${masterFormats.map(format => `<span class="format-tag">${format}</span>`).join('')}
+            </div>
+            ${hasISRCs ? '<p style="margin-top: 12px; font-size: 14px; color: #6b7280;">✓ Client has ISRC codes to embed</p>' : ''}
+        </div>
 
-MASTER FORMATS REQUIRED:
-${masterFormats.map(format => `• ${format}`).join('\n')}
+        <div class="section">
+            <div class="section-title">📞 Contact Information</div>
+            <div class="field-group">
+                <div class="field">
+                    <div class="field-label">Email</div>
+                    <div class="field-value"><a href="mailto:${email}" style="color: #2563eb;">${email}</a></div>
+                </div>
+                ${phone ? `
+                <div class="field">
+                    <div class="field-label">Phone</div>
+                    <div class="field-value"><a href="tel:${phone}" style="color: #2563eb;">${phone}</a></div>
+                </div>` : ''}
+            </div>
+        </div>
 
-${hasISRCs ? 'ISRC CODES: Client has ISRCs to embed\n' : ''}
+        ${projectNotes ? `
+        <div class="section">
+            <div class="section-title">📝 Additional Notes</div>
+            <div class="field-value" style="white-space: pre-wrap;">${projectNotes}</div>
+        </div>` : ''}
 
-CONTACT INFO:
-• Email: ${email}
-${phone ? `• Phone: ${phone}` : ''}
+        <div class="footer">
+            <p>Submitted via LC Mastering Request Form<br>
+            ${new Date().toLocaleString()}</p>
+        </div>
+    </div>
+</body>
+</html>`;
 
-${projectNotes ? `ADDITIONAL NOTES:\n${projectNotes}` : ''}
+      // Prepare EmailJS template parameters
+      const templateParams = {
+        to_email: 'lachlanjc@gmail.com',
+        from_name: artist,
+        subject: `New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`,
+        html_content: htmlContent,
+        artist: artist,
+        project_title: title,
+        project_type: projectType,
+        num_tracks: numTracks,
+        email: email,
+        phone: phone || 'Not provided',
+        deadline: deadline || 'Not specified',
+        is_rush: isRush ? 'Yes' : 'No',
+        master_formats: masterFormats.join(', '),
+        tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}`).join('\n'),
+        file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}`).join('\n'),
+        notes: projectNotes || 'None'
+      };
 
----
-Submitted: ${new Date().toLocaleString()}
-`.trim();
-
-      // Create mailto link
-      const subject = encodeURIComponent(`New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`);
-      const body = encodeURIComponent(emailContent);
-      const mailtoLink = `mailto:lachlanjc@gmail.com?subject=${subject}&body=${body}`;
-      
-      // Log formatted content for easy copying
-      console.log("=== MASTERING REQUEST EMAIL ===");
-      console.log(emailContent);
-      console.log("================================");
-      
-      // Open email client
-      window.open(mailtoLink);
+      // Send email via EmailJS
+      // You'll need to replace these with your actual EmailJS credentials
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        templateParams,
+        'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+      );
 
       toast({
-        title: "Opening your email client...",
-        description: "The request details have been formatted and copied to console for backup.",
+        title: "Mastering request sent successfully!",
+        description: "Your beautifully formatted request has been sent directly to Lachlan.",
       });
+
+      // Log for backup
+      console.log("=== MASTERING REQUEST SENT ===");
+      console.log("HTML Content:", htmlContent);
+      console.log("Template Params:", templateParams);
+      console.log("==============================");
 
       // Reset form
       setProjectType("");
