@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink } from "lucide-react";
+import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink, Cloud, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ProjectType = "single" | "ep" | "album" | "";
@@ -28,7 +28,7 @@ export function ClientIntakeForm() {
   const [projectType, setProjectType] = useState<ProjectType>("");
   const [numTracks, setNumTracks] = useState<number>(1);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [mixFiles, setMixFiles] = useState<MixFile[]>([{ id: "mix-1", url: "", description: "Project files (Dropbox/Drive folder or individual links)" }]);
+  const [mixFiles, setMixFiles] = useState<MixFile[]>([{ id: "mix-1", url: "", description: "" }]);
   const [hasISRCs, setHasISRCs] = useState(false);
   const [deadline, setDeadline] = useState("");
   const [isRush, setIsRush] = useState(false);
@@ -97,6 +97,24 @@ export function ClientIntakeForm() {
         ? prev.filter(f => f !== format)
         : [...prev, format]
     );
+  };
+
+  const validateFileLink = (url: string) => {
+    if (!url) return { isValid: false, service: null };
+    
+    const dropboxPattern = /^https?:\/\/(www\.)?(dropbox\.com|dl\.dropboxusercontent\.com)/i;
+    const drivePattern = /^https?:\/\/(www\.)?(drive\.google\.com|docs\.google\.com)/i;
+    const wetransferPattern = /^https?:\/\/(www\.)?(wetransfer\.com|we\.tl)/i;
+    
+    if (dropboxPattern.test(url)) {
+      return { isValid: true, service: 'dropbox' };
+    } else if (drivePattern.test(url)) {
+      return { isValid: true, service: 'drive' };
+    } else if (wetransferPattern.test(url)) {
+      return { isValid: true, service: 'wetransfer' };
+    }
+    
+    return { isValid: false, service: null };
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -283,35 +301,48 @@ export function ClientIntakeForm() {
                   </Button>
                 </div>
                 <div className="space-y-3">
-                  {mixFiles.map((mixFile, index) => (
-                    <div key={mixFile.id} className="flex gap-3 items-start">
-                      <div className="flex-1 space-y-2">
-                        <Input
-                          value={mixFile.url}
-                          onChange={(e) => updateMixFile(mixFile.id, "url", e.target.value)}
-                          placeholder="Dropbox/Drive link or file URL"
-                          className="bg-input border-border"
-                        />
-                        <Input
-                          value={mixFile.description}
-                          onChange={(e) => updateMixFile(mixFile.id, "description", e.target.value)}
-                          placeholder="Description (optional)"
-                          className="bg-input border-border text-sm"
-                        />
+                  {mixFiles.map((mixFile, index) => {
+                    const validation = validateFileLink(mixFile.url);
+                    return (
+                      <div key={mixFile.id} className="flex gap-3 items-start">
+                        <div className="flex-1 space-y-2">
+                          <div className="relative">
+                            <Input
+                              value={mixFile.url}
+                              onChange={(e) => updateMixFile(mixFile.id, "url", e.target.value)}
+                              placeholder="Dropbox/Drive link or file URL"
+                              className="bg-input border-border pr-20"
+                            />
+                            {validation.isValid && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                <Cloud className="h-4 w-4 text-primary" />
+                                <Check className="h-4 w-4 text-green-500" />
+                              </div>
+                            )}
+                          </div>
+                          {mixFile.id !== "mix-1" && (
+                            <Input
+                              value={mixFile.description}
+                              onChange={(e) => updateMixFile(mixFile.id, "description", e.target.value)}
+                              placeholder="Description (optional)"
+                              className="bg-input border-border text-sm"
+                            />
+                          )}
+                        </div>
+                        {mixFiles.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeMixFile(mixFile.id)}
+                            className="mt-1 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      {mixFiles.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeMixFile(mixFile.id)}
-                          className="mt-1 text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
