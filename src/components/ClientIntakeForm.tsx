@@ -103,22 +103,25 @@ export function ClientIntakeForm() {
     if (!url) return { isValid: false, service: null };
     
     console.log("Validating URL:", url);
+    console.log("URL starts with https://www.dropbox.com:", url.startsWith("https://www.dropbox.com"));
+    console.log("URL starts with https://dropbox.com:", url.startsWith("https://dropbox.com"));
     
-    const dropboxPattern = /^https?:\/\/(www\.)?dropbox\.com/i;
-    const drivePattern = /^https?:\/\/(www\.)?(drive\.google\.com|docs\.google\.com)/i;
-    const wetransferPattern = /^https?:\/\/(www\.)?(wetransfer\.com|we\.tl)/i;
+    // Simplified patterns to test
+    const isDropbox = url.includes("dropbox.com");
+    const isDrive = url.includes("drive.google.com") || url.includes("docs.google.com");
+    const isWeTransfer = url.includes("wetransfer.com") || url.includes("we.tl");
     
-    console.log("Testing Dropbox pattern:", dropboxPattern.test(url));
-    console.log("Testing Drive pattern:", drivePattern.test(url));
-    console.log("Testing WeTransfer pattern:", wetransferPattern.test(url));
+    console.log("Contains dropbox.com:", isDropbox);
+    console.log("Contains google drive:", isDrive);
+    console.log("Contains wetransfer:", isWeTransfer);
     
-    if (dropboxPattern.test(url)) {
+    if (isDropbox) {
       console.log("Dropbox link detected");
       return { isValid: true, service: 'dropbox' };
-    } else if (drivePattern.test(url)) {
+    } else if (isDrive) {
       console.log("Google Drive link detected");
       return { isValid: true, service: 'drive' };
-    } else if (wetransferPattern.test(url)) {
+    } else if (isWeTransfer) {
       console.log("WeTransfer link detected");
       return { isValid: true, service: 'wetransfer' };
     }
