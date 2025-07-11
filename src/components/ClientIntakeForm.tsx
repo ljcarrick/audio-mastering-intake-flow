@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X } from "lucide-react";
+import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ProjectType = "single" | "ep" | "album" | "";
@@ -35,6 +35,7 @@ export function ClientIntakeForm() {
   const [projectNotes, setProjectNotes] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Auto-fill track count based on project type
@@ -90,6 +91,14 @@ export function ClientIntakeForm() {
     setMixFiles(updatedFiles);
   };
 
+  const toggleMasterFormat = (format: string) => {
+    setMasterFormats(prev => 
+      prev.includes(format) 
+        ? prev.filter(f => f !== format)
+        : [...prev, format]
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -116,6 +125,7 @@ export function ClientIntakeForm() {
       hasISRCs,
       deadline,
       isRush,
+      masterFormats,
       projectNotes,
       email,
       phone,
@@ -180,20 +190,39 @@ export function ClientIntakeForm() {
               </div>
 
               {/* ISRC Toggle - Moved up */}
-              <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg border border-border">
-                <Switch
-                  id="has-isrcs"
-                  checked={hasISRCs}
-                  onCheckedChange={setHasISRCs}
-                />
-                <div className="space-y-1">
-                  <Label htmlFor="has-isrcs" className="text-sm font-medium">
-                    Do you have ISRCs?
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    International Standard Recording Codes for digital distribution
-                  </p>
+              <div className="flex items-center justify-between p-4 bg-accent/20 rounded-lg border border-border">
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    id="has-isrcs"
+                    checked={hasISRCs}
+                    onCheckedChange={setHasISRCs}
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="has-isrcs" className="text-sm font-medium">
+                      ISRCs to embed?
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      International Standard Recording Codes for digital distribution
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="border-border"
+                >
+                  <a 
+                    href="https://www.aria.com.au/industry/isrc" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    Help me apply (AU)
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
               </div>
 
               {/* Track List */}
@@ -341,6 +370,28 @@ export function ClientIntakeForm() {
                   </div>
                 </div>
               )}
+
+              {/* Master Formats */}
+              <div className="space-y-4">
+                <Label>Master Formats *</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Streaming", "Vinyl", "CD", "HD Digital"].map((format) => (
+                    <div key={format} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={format.toLowerCase().replace(" ", "-")}
+                        checked={masterFormats.includes(format)}
+                        onCheckedChange={() => toggleMasterFormat(format)}
+                      />
+                      <Label 
+                        htmlFor={format.toLowerCase().replace(" ", "-")}
+                        className="text-sm font-medium"
+                      >
+                        {format}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Project Notes / Preferences</Label>
