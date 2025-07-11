@@ -403,24 +403,27 @@ export function ClientIntakeForm() {
 </body>
 </html>`;
 
-      // Prepare EmailJS template parameters
+      // Prepare EmailJS template parameters - simplified format
       const templateParams = {
         to_email: 'lachlanjc@gmail.com',
         from_name: artist,
         subject: `New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`,
-        html_content: htmlContent,
+        
+        // Main content fields for EmailJS template
         artist: artist,
-        project_title: title,
-        project_type: projectType,
+        project_title: title || 'N/A',
+        project_type: projectType.toUpperCase(),
         num_tracks: numTracks,
         email: email,
         phone: phone || 'Not provided',
-        deadline: deadline || 'Not specified',
-        is_rush: isRush ? 'Yes' : 'No',
+        deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
+        is_rush: isRush ? 'YES - Rush Order' : 'Standard Priority',
         master_formats: masterFormats.join(', '),
-        tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}`).join('\n'),
-        file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}`).join('\n'),
-        notes: projectNotes || 'None'
+        tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
+        file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}${f.description ? ` - ${f.description}` : ''}`).join('\n'),
+        notes: projectNotes || 'None',
+        has_isrc: hasISRCs ? 'Yes - Client has ISRC codes to embed' : 'No',
+        submission_date: new Date().toLocaleString()
       };
 
       // Send email via EmailJS
