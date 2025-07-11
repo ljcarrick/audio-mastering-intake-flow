@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle } from "lucide-react";
+import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ProjectType = "single" | "ep" | "album" | "";
@@ -15,14 +15,20 @@ type ProjectType = "single" | "ep" | "album" | "";
 interface Track {
   id: string;
   title: string;
-  mixFileLink: string;
   isrc?: string;
+}
+
+interface MixFile {
+  id: string;
+  url: string;
+  description: string;
 }
 
 export function ClientIntakeForm() {
   const [projectType, setProjectType] = useState<ProjectType>("");
   const [numTracks, setNumTracks] = useState<number>(1);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [mixFiles, setMixFiles] = useState<MixFile[]>([{ id: "mix-1", url: "", description: "Project files (Dropbox/Drive folder or individual links)" }]);
   const [hasISRCs, setHasISRCs] = useState(false);
   const [deadline, setDeadline] = useState("");
   const [isRush, setIsRush] = useState(false);
@@ -50,7 +56,6 @@ export function ClientIntakeForm() {
       newTracks.push({
         id: `track-${i + 1}`,
         title: existingTrack?.title || "",
-        mixFileLink: existingTrack?.mixFileLink || "",
         isrc: existingTrack?.isrc || "",
       });
     }
@@ -61,6 +66,28 @@ export function ClientIntakeForm() {
     const updatedTracks = [...tracks];
     updatedTracks[index] = { ...updatedTracks[index], [field]: value };
     setTracks(updatedTracks);
+  };
+
+  const addMixFile = () => {
+    const newMixFile: MixFile = {
+      id: `mix-${mixFiles.length + 1}`,
+      url: "",
+      description: `Additional files ${mixFiles.length + 1}`
+    };
+    setMixFiles([...mixFiles, newMixFile]);
+  };
+
+  const removeMixFile = (id: string) => {
+    if (mixFiles.length > 1) {
+      setMixFiles(mixFiles.filter(file => file.id !== id));
+    }
+  };
+
+  const updateMixFile = (id: string, field: keyof MixFile, value: string) => {
+    const updatedFiles = mixFiles.map(file =>
+      file.id === id ? { ...file, [field]: value } : file
+    );
+    setMixFiles(updatedFiles);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,6 +112,7 @@ export function ClientIntakeForm() {
       projectType,
       numTracks,
       tracks,
+      mixFiles,
       hasISRCs,
       deadline,
       isRush,
@@ -111,7 +139,7 @@ export function ClientIntakeForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Project Details */}
-          <Card className="bg-gradient-card shadow-card">
+          <Card className="bg-gradient-card shadow-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Music className="h-5 w-5 text-primary" />
@@ -126,7 +154,7 @@ export function ClientIntakeForm() {
                 <div className="space-y-2">
                   <Label htmlFor="project-type">Project Type *</Label>
                   <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-input border-border">
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -146,67 +174,13 @@ export function ClientIntakeForm() {
                     max="50"
                     value={numTracks}
                     onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
-                    className="bg-background"
+                    className="bg-input border-border"
                   />
                 </div>
               </div>
 
-              {/* Track List */}
-              {tracks.length > 0 && (
-                <div className="space-y-4 animate-fade-in">
-                  <Label>Track List *</Label>
-                  <div className="space-y-4">
-                    {tracks.map((track, index) => (
-                      <Card key={track.id} className="p-4 bg-accent/30">
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <Label htmlFor={`track-title-${index}`}>
-                                {index + 1}. Song Title *
-                              </Label>
-                              <Input
-                                id={`track-title-${index}`}
-                                value={track.title}
-                                onChange={(e) => updateTrack(index, "title", e.target.value)}
-                                placeholder={`Track ${index + 1} title`}
-                                className="bg-background"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label htmlFor={`mix-file-${index}`}>
-                                Mix File Link
-                              </Label>
-                              <Input
-                                id={`mix-file-${index}`}
-                                value={track.mixFileLink}
-                                onChange={(e) => updateTrack(index, "mixFileLink", e.target.value)}
-                                placeholder="Dropbox/Drive link or file URL"
-                                className="bg-background"
-                              />
-                            </div>
-                          </div>
-                          
-                          {hasISRCs && (
-                            <div className="animate-fade-in">
-                              <Label htmlFor={`isrc-${index}`}>ISRC Code</Label>
-                              <Input
-                                id={`isrc-${index}`}
-                                value={track.isrc || ""}
-                                onChange={(e) => updateTrack(index, "isrc", e.target.value)}
-                                placeholder="US-ABC-XX-XXXXX"
-                                className="bg-background"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ISRC Toggle */}
-              <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
+              {/* ISRC Toggle - Moved up */}
+              <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg border border-border">
                 <Switch
                   id="has-isrcs"
                   checked={hasISRCs}
@@ -221,11 +195,101 @@ export function ClientIntakeForm() {
                   </p>
                 </div>
               </div>
+
+              {/* Track List */}
+              {tracks.length > 0 && (
+                <div className="space-y-4 animate-fade-in">
+                  <Label>Track List *</Label>
+                  <div className="space-y-4">
+                    {tracks.map((track, index) => (
+                      <Card key={track.id} className="p-4 bg-accent/30 border-border">
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label htmlFor={`track-title-${index}`}>
+                                {index + 1}. Song Title *
+                              </Label>
+                              <Input
+                                id={`track-title-${index}`}
+                                value={track.title}
+                                onChange={(e) => updateTrack(index, "title", e.target.value)}
+                                placeholder={`Track ${index + 1} title`}
+                                className="bg-input border-border"
+                              />
+                            </div>
+                            
+                            {hasISRCs && (
+                              <div className="space-y-1 animate-fade-in">
+                                <Label htmlFor={`isrc-${index}`}>ISRC Code</Label>
+                                <Input
+                                  id={`isrc-${index}`}
+                                  value={track.isrc || ""}
+                                  onChange={(e) => updateTrack(index, "isrc", e.target.value)}
+                                  placeholder="US-ABC-XX-XXXXX"
+                                  className="bg-input border-border"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mix Files */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Mix File Links</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addMixFile}
+                    className="border-border"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add More Files
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {mixFiles.map((mixFile, index) => (
+                    <div key={mixFile.id} className="flex gap-3 items-start">
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          value={mixFile.url}
+                          onChange={(e) => updateMixFile(mixFile.id, "url", e.target.value)}
+                          placeholder="Dropbox/Drive link or file URL"
+                          className="bg-input border-border"
+                        />
+                        <Input
+                          value={mixFile.description}
+                          onChange={(e) => updateMixFile(mixFile.id, "description", e.target.value)}
+                          placeholder="Description (optional)"
+                          className="bg-input border-border text-sm"
+                        />
+                      </div>
+                      {mixFiles.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeMixFile(mixFile.id)}
+                          className="mt-1 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Timeline & Requirements */}
-          <Card className="bg-gradient-card shadow-card">
+          <Card className="bg-gradient-card shadow-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
@@ -241,11 +305,11 @@ export function ClientIntakeForm() {
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
-                    className="bg-background"
+                    className="bg-input border-border"
                   />
                 </div>
 
-                <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
+                <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg border border-border">
                   <Checkbox
                     id="rush"
                     checked={isRush}
@@ -286,14 +350,14 @@ export function ClientIntakeForm() {
                   onChange={(e) => setProjectNotes(e.target.value)}
                   placeholder="Tell us about your artistic vision, reference tracks, specific requirements, or any other details..."
                   rows={4}
-                  className="bg-background"
+                  className="bg-input border-border"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Contact Information */}
-          <Card className="bg-gradient-card shadow-card">
+          <Card className="bg-gradient-card shadow-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
@@ -312,7 +376,7 @@ export function ClientIntakeForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="pl-10 bg-background"
+                      className="pl-10 bg-input border-border"
                       required
                     />
                   </div>
@@ -328,7 +392,7 @@ export function ClientIntakeForm() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="pl-10 bg-background"
+                      className="pl-10 bg-input border-border"
                     />
                   </div>
                 </div>
