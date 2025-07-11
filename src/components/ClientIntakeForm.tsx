@@ -102,18 +102,24 @@ export function ClientIntakeForm() {
   const validateFileLink = (url: string) => {
     if (!url) return { isValid: false, service: null };
     
-    const dropboxPattern = /^https?:\/\/(www\.)?(dropbox\.com|dl\.dropboxusercontent\.com)/i;
+    console.log("Validating URL:", url);
+    
+    const dropboxPattern = /^https?:\/\/(www\.)?dropbox\.com/i;
     const drivePattern = /^https?:\/\/(www\.)?(drive\.google\.com|docs\.google\.com)/i;
     const wetransferPattern = /^https?:\/\/(www\.)?(wetransfer\.com|we\.tl)/i;
     
     if (dropboxPattern.test(url)) {
+      console.log("Dropbox link detected");
       return { isValid: true, service: 'dropbox' };
     } else if (drivePattern.test(url)) {
+      console.log("Google Drive link detected");
       return { isValid: true, service: 'drive' };
     } else if (wetransferPattern.test(url)) {
+      console.log("WeTransfer link detected");
       return { isValid: true, service: 'wetransfer' };
     }
     
+    console.log("No valid service detected");
     return { isValid: false, service: null };
   };
 
