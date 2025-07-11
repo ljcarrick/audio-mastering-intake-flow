@@ -108,6 +108,10 @@ export function ClientIntakeForm() {
     const drivePattern = /^https?:\/\/(www\.)?(drive\.google\.com|docs\.google\.com)/i;
     const wetransferPattern = /^https?:\/\/(www\.)?(wetransfer\.com|we\.tl)/i;
     
+    console.log("Testing Dropbox pattern:", dropboxPattern.test(url));
+    console.log("Testing Drive pattern:", drivePattern.test(url));
+    console.log("Testing WeTransfer pattern:", wetransferPattern.test(url));
+    
     if (dropboxPattern.test(url)) {
       console.log("Dropbox link detected");
       return { isValid: true, service: 'dropbox' };
