@@ -424,12 +424,11 @@ export function ClientIntakeForm() {
       };
 
       // Send email via EmailJS
-      // You'll need to replace these with your actual EmailJS credentials
       await emailjs.send(
-        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        'service_oi7xq61', // Your EmailJS service ID
+        'template_fo3ohen', // Your EmailJS template ID
         templateParams,
-        'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+        '7r-gHxfrqZAXNGSvcr98c' // Your EmailJS public key
       );
 
       toast({
