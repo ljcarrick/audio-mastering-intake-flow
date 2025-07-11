@@ -92,11 +92,16 @@ export function ClientIntakeForm() {
     );
     setMixFiles(updatedFiles);
 
-    // If updating URL and it's a valid link, fetch the title
-    if (field === 'url' && value) {
+    // If updating URL, validate and handle title
+    if (field === 'url') {
       const validation = validateFileLink(value);
-      if (validation.isValid) {
+      if (validation.isValid && value) {
         fetchLinkTitle(value, id);
+      } else {
+        // Clear title if URL becomes invalid or empty
+        setMixFiles(files => files.map(file =>
+          file.id === id ? { ...file, title: undefined, isLoading: false } : file
+        ));
       }
     }
   };
@@ -397,8 +402,16 @@ export function ClientIntakeForm() {
                             <div className="p-2 bg-accent/50 rounded border border-border animate-fade-in">
                               <div className="flex items-center gap-2">
                                 <Cloud className="h-4 w-4 text-primary" />
-                                <span className="text-sm font-medium">{mixFile.title}</span>
+                                <a 
+                                  href={mixFile.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm font-medium text-primary hover:underline cursor-pointer"
+                                >
+                                  {mixFile.title}
+                                </a>
                                 <Check className="h-4 w-4 text-green-500" />
+                                <ExternalLink className="h-3 w-3 text-muted-foreground" />
                               </div>
                             </div>
                           )}
