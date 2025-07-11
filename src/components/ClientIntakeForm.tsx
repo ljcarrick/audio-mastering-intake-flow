@@ -247,31 +247,53 @@ export function ClientIntakeForm() {
     setIsSubmitting(true);
 
     try {
-      // Prepare form data
-      const formData = {
-        projectType,
-        numTracks,
-        tracks,
-        mixFiles: mixFiles.filter(file => file.url), // Only include files with URLs
-        hasISRCs,
-        deadline,
-        isRush,
-        masterFormats,
-        projectNotes,
-        email,
-        phone,
-        submittedAt: new Date().toISOString(),
-      };
+      // Prepare formatted email content
+      const emailContent = `
+NEW MASTERING REQUEST - ${new Date().toLocaleDateString()}
 
-      // In a real app, this would be sent to your backend
-      console.log("Submitting form data:", formData);
+PROJECT DETAILS:
+• Project Type: ${projectType}
+• Number of Tracks: ${numTracks}
+• Rush Order: ${isRush ? 'Yes' : 'No'}
+${deadline ? `• Preferred Deadline: ${deadline}` : ''}
+
+TRACKS:
+${tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n')}
+
+FILES:
+${mixFiles.filter(file => file.url).map((file, i) => `${i + 1}. ${file.url}${file.description ? ` - ${file.description}` : ''}`).join('\n')}
+
+MASTER FORMATS REQUIRED:
+${masterFormats.map(format => `• ${format}`).join('\n')}
+
+${hasISRCs ? 'ISRC CODES: Client has ISRCs to embed\n' : ''}
+
+CONTACT INFO:
+• Email: ${email}
+${phone ? `• Phone: ${phone}` : ''}
+
+${projectNotes ? `ADDITIONAL NOTES:\n${projectNotes}` : ''}
+
+---
+Submitted: ${new Date().toLocaleString()}
+`.trim();
+
+      // Create mailto link
+      const subject = encodeURIComponent(`New Mastering Request - ${tracks[0]?.title || 'Untitled'}`);
+      const body = encodeURIComponent(emailContent);
+      const mailtoLink = `mailto:lachlanjc@gmail.com?subject=${subject}&body=${body}`;
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Log formatted content for easy copying
+      console.log("=== MASTERING REQUEST EMAIL ===");
+      console.log(emailContent);
+      console.log("================================");
+      
+      // Open email client
+      window.open(mailtoLink);
 
       toast({
-        title: "Mastering request submitted!",
-        description: "We'll review your project and get back to you within 24 hours.",
+        title: "Opening your email client...",
+        description: "The request details have been formatted and copied to console for backup.",
       });
 
       // Reset form
@@ -314,8 +336,7 @@ export function ClientIntakeForm() {
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Project Details */}
           <div className="bg-white border border-gray-200 rounded-sm p-8">
-            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
-              <Music className="h-5 w-5 text-black" />
+            <h2 className="text-xl font-normal text-black mb-6">
               Project Details
             </h2>
             <div className="space-y-6">
@@ -392,37 +413,35 @@ export function ClientIntakeForm() {
                     <Label className="text-sm font-medium text-black">Track List *</Label>
                     {errors.tracks && <p className="text-sm text-red-600">{errors.tracks}</p>}
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {tracks.map((track, index) => (
-                      <div key={track.id} className="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
-                                {index + 1}. Song Title *
-                              </Label>
-                                <Input
-                                  id={`track-title-${index}`}
-                                  value={track.title}
-                                  onChange={(e) => updateTrack(index, "title", e.target.value)}
-                                  placeholder={`Track ${index + 1} title`}
-                                  className={`bg-white border-gray-300 rounded-sm ${errors.tracks ? 'border-red-500' : ''}`}
-                                />
-                            </div>
-                            
-                            {hasISRCs && (
-                              <div className="space-y-1">
-                                <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
-                                <Input
-                                  id={`isrc-${index}`}
-                                  value={track.isrc || ""}
-                                  onChange={(e) => updateTrack(index, "isrc", e.target.value)}
-                                  placeholder="US-ABC-XX-XXXXX"
-                                  className="bg-white border-gray-300 rounded-sm"
-                                />
-                              </div>
-                            )}
+                      <div key={track.id} className="p-3 bg-gray-50 border border-gray-200 rounded-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
+                              {index + 1}. Song Title *
+                            </Label>
+                            <Input
+                              id={`track-title-${index}`}
+                              value={track.title}
+                              onChange={(e) => updateTrack(index, "title", e.target.value)}
+                              placeholder={`Track ${index + 1} title`}
+                              className={`bg-white border-gray-300 rounded-sm ${errors.tracks ? 'border-red-500' : ''}`}
+                            />
                           </div>
+                          
+                          {hasISRCs && (
+                            <div className="space-y-1">
+                              <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
+                              <Input
+                                id={`isrc-${index}`}
+                                value={track.isrc || ""}
+                                onChange={(e) => updateTrack(index, "isrc", e.target.value)}
+                                placeholder="US-ABC-XX-XXXXX"
+                                className="bg-white border-gray-300 rounded-sm"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
