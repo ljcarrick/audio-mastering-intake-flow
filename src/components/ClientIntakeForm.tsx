@@ -31,6 +31,8 @@ interface Contact {
   name: string;
   email: string;
   phone: string;
+  role: string;
+  customRole: string;
   billTo: boolean;
 }
 
@@ -51,7 +53,7 @@ export function ClientIntakeForm() {
   const [isRush, setIsRush] = useState(false);
   const [projectNotes, setProjectNotes] = useState("");
   const [contacts, setContacts] = useState<Contact[]>([
-    { id: "contact-1", name: "", email: "", phone: "", billTo: false }
+    { id: "contact-1", name: "", email: "", phone: "", role: "", customRole: "", billTo: false }
   ]);
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "" });
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
@@ -98,6 +100,8 @@ export function ClientIntakeForm() {
       name: "",
       email: "",
       phone: "",
+      role: "",
+      customRole: "",
       billTo: false
     };
     setContacts([...contacts, newContact]);
@@ -506,7 +510,7 @@ export function ClientIntakeForm() {
         project_type: projectType.toUpperCase(),
         num_tracks: numTracks,
         contacts_info: contacts.filter(c => c.name || c.email).map(c => 
-          `${c.name} - ${c.email}${c.phone ? ` - ${c.phone}` : ''}${c.billTo ? ' (Bill To)' : ''}`
+          `${c.name} - ${c.email}${c.phone ? ` - ${c.phone}` : ''} - ${c.role === 'other' ? c.customRole : c.role}${c.billTo ? ' (Bill To)' : ''}`
         ).join('\n'),
         billing_name: billingInfo.name,
         billing_email: billingInfo.email,
@@ -554,7 +558,7 @@ export function ClientIntakeForm() {
       setHasISRCs(false);
       setDeadline("");
       setIsRush(false);
-      setContacts([{ id: "contact-1", name: "", email: "", phone: "", billTo: false }]);
+      setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", customRole: "", billTo: false }]);
       setBillingInfo({ name: "", email: "" });
       setMasterFormats([]);
       setProjectNotes("");
@@ -943,6 +947,7 @@ export function ClientIntakeForm() {
                       <th className="text-left py-3 px-3 text-sm font-medium text-black">Name *</th>
                       <th className="text-left py-3 px-3 text-sm font-medium text-black">Email *</th>
                       <th className="text-left py-3 px-3 text-sm font-medium text-black">Phone</th>
+                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Role</th>
                       <th className="text-left py-3 px-3 text-sm font-medium text-black">Bill To</th>
                       <th className="text-left py-3 px-3 text-sm font-medium text-black">Actions</th>
                     </tr>
@@ -975,6 +980,32 @@ export function ClientIntakeForm() {
                             placeholder="Phone number"
                             className="bg-white border-gray-300 rounded-sm"
                           />
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="space-y-2">
+                            <Select
+                              value={contact.role}
+                              onValueChange={(value) => updateContact(contact.id, 'role', value)}
+                            >
+                              <SelectTrigger className="bg-white border-gray-300 rounded-sm">
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="artist">Artist</SelectItem>
+                                <SelectItem value="mixer">Mixer</SelectItem>
+                                <SelectItem value="producer">Producer</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {contact.role === 'other' && (
+                              <Input
+                                value={contact.customRole}
+                                onChange={(e) => updateContact(contact.id, 'customRole', e.target.value)}
+                                placeholder="Enter custom role"
+                                className="bg-white border-gray-300 rounded-sm text-sm"
+                              />
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-center">
                           <Checkbox
