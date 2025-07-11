@@ -508,10 +508,9 @@ export function ClientIntakeForm() {
         project_type: projectType.toUpperCase(),
         num_tracks: numTracks,
         contacts_info: contacts.filter(c => c.name || c.email).map(c => 
-          `${c.name} - ${c.email}${c.phone ? ` - ${c.phone}` : ''} - ${c.role}${c.billTo ? ' (Bill To)' : ''}`
+          `${c.name || 'No Name'} - ${c.email || 'No Email'} - ${c.phone || 'No Phone'} - ${c.role || 'No Role'}${c.billTo ? ' (Bill To)' : ''}`
         ).join('\n'),
-        billing_name: billingInfo.name,
-        billing_email: billingInfo.email,
+        billing_info: billingInfo.name || billingInfo.email ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
         is_rush: isRush ? 'YES - Rush' : 'Standard Priority',
         master_formats: masterFormats.join(', '),
