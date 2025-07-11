@@ -147,17 +147,31 @@ export function ClientIntakeForm() {
     ));
 
     try {
-      // Simple title extraction from common patterns
       if (url.includes("dropbox.com")) {
-        // Extract folder name from Dropbox URL path
-        const matches = url.match(/\/([^\/]+)\?/);
-        if (matches) {
-          const folderName = decodeURIComponent(matches[1]);
-          setMixFiles(files => files.map(file => 
-            file.id === fileId ? { ...file, title: folderName, isLoading: false } : file
-          ));
-          return;
+        // Fetch the actual page to get the folder name
+        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        const html = data.contents;
+        
+        // Try to extract folder name from the HTML
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const h2Match = html.match(/<h2[^>]*>([^<]+)<\/h2>/i);
+        
+        let folderName = "Dropbox Folder";
+        
+        if (h2Match && h2Match[1]) {
+          folderName = h2Match[1].trim();
+        } else if (titleMatch && titleMatch[1]) {
+          const title = titleMatch[1].trim();
+          if (title !== "Dropbox" && !title.includes("shared")) {
+            folderName = title.replace(" - Dropbox", "").trim();
+          }
         }
+        
+        setMixFiles(files => files.map(file => 
+          file.id === fileId ? { ...file, title: folderName, isLoading: false } : file
+        ));
+        return;
       }
       
       // For drive.google.com links, extract from different patterns
