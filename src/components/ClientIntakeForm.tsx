@@ -440,10 +440,9 @@ export function ClientIntakeForm() {
         'uImkSaSkdRPL1Sk0v' // Your correct EmailJS public key
       );
 
-      toast({
-        title: "Mastering request sent successfully!",
-        description: "Your beautifully formatted request has been sent directly to Lachlan.",
-      });
+        toast({
+          title: "Emailed to LC",
+        });
 
       // Log for backup
       console.log("=== MASTERING REQUEST SENT ===");
