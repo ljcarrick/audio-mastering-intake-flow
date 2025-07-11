@@ -27,6 +27,8 @@ interface MixFile {
 
 export function ClientIntakeForm() {
   const [projectType, setProjectType] = useState<ProjectType>("");
+  const [artist, setArtist] = useState("");
+  const [title, setTitle] = useState("");
   const [numTracks, setNumTracks] = useState<number>(1);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [mixFiles, setMixFiles] = useState<MixFile[]>([{ id: "mix-1", url: "", description: "" }]);
@@ -185,6 +187,14 @@ export function ClientIntakeForm() {
       newErrors.projectType = "Project type is required";
     }
 
+    if (!artist.trim()) {
+      newErrors.artist = "Artist name is required";
+    }
+
+    if (projectType !== "single" && !title.trim()) {
+      newErrors.title = `${projectType === "ep" ? "EP" : "Album"} title is required`;
+    }
+
     if (!email) {
       newErrors.email = "Email address is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -216,6 +226,8 @@ export function ClientIntakeForm() {
   const isFormValid = () => {
     return (
       projectType &&
+      artist.trim() &&
+      (projectType === "single" || title.trim()) &&
       email &&
       /\S+@\S+\.\S+/.test(email) &&
       tracks.every(track => track.title.trim()) &&
@@ -252,6 +264,8 @@ export function ClientIntakeForm() {
 NEW MASTERING REQUEST - ${new Date().toLocaleDateString()}
 
 PROJECT DETAILS:
+• Artist: ${artist}
+${title ? `• ${projectType === "ep" ? "EP" : projectType === "album" ? "Album" : "Project"} Title: ${title}` : ''}
 • Project Type: ${projectType}
 • Number of Tracks: ${numTracks}
 • Rush Order: ${isRush ? 'Yes' : 'No'}
@@ -279,7 +293,7 @@ Submitted: ${new Date().toLocaleString()}
 `.trim();
 
       // Create mailto link
-      const subject = encodeURIComponent(`New Mastering Request - ${tracks[0]?.title || 'Untitled'}`);
+      const subject = encodeURIComponent(`New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`);
       const body = encodeURIComponent(emailContent);
       const mailtoLink = `mailto:lachlanjc@gmail.com?subject=${subject}&body=${body}`;
       
@@ -298,6 +312,8 @@ Submitted: ${new Date().toLocaleString()}
 
       // Reset form
       setProjectType("");
+      setArtist("");
+      setTitle("");
       setNumTracks(1);
       setTracks([]);
       setMixFiles([{ id: "mix-1", url: "", description: "" }]);
@@ -370,6 +386,47 @@ Submitted: ${new Date().toLocaleString()}
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="artist" className="text-sm font-medium text-black">Artist *</Label>
+                  <Input
+                    id="artist"
+                    type="text"
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    placeholder="Artist name"
+                    className={`bg-white border-gray-300 rounded-sm ${errors.artist ? 'border-red-500' : ''}`}
+                  />
+                  {errors.artist && <p className="text-sm text-red-600">{errors.artist}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-medium text-black">
+                    {projectType === "ep" ? "EP Title" : 
+                     projectType === "album" ? "Album Title" : 
+                     "Project Title"} {projectType !== "single" ? "*" : ""}
+                  </Label>
+                  <Input
+                    id="title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder={
+                      projectType === "ep" ? "EP title" : 
+                      projectType === "album" ? "Album title" : 
+                      "Not required for singles"
+                    }
+                    disabled={projectType === "single"}
+                    className={`bg-white border-gray-300 rounded-sm ${
+                      projectType === "single" 
+                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
+                        : errors.title ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
+                </div>
+              </div>
+
               {/* ISRC Toggle */}
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-sm border border-gray-200">
                 <div className="flex items-center space-x-3">
@@ -410,7 +467,7 @@ Submitted: ${new Date().toLocaleString()}
               {tracks.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-black">Track List *</Label>
+                    <Label className="text-sm font-medium text-black">Track List / Order *</Label>
                     {errors.tracks && <p className="text-sm text-red-600">{errors.tracks}</p>}
                   </div>
                   <div className="space-y-3">
