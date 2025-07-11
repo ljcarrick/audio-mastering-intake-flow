@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -117,31 +116,18 @@ export function ClientIntakeForm() {
   const validateFileLink = (url: string) => {
     if (!url) return { isValid: false, service: null };
     
-    console.log("Validating URL:", url);
-    console.log("URL starts with https://www.dropbox.com:", url.startsWith("https://www.dropbox.com"));
-    console.log("URL starts with https://dropbox.com:", url.startsWith("https://dropbox.com"));
-    
-    // Simplified patterns to test
     const isDropbox = url.includes("dropbox.com");
     const isDrive = url.includes("drive.google.com") || url.includes("docs.google.com");
     const isWeTransfer = url.includes("wetransfer.com") || url.includes("we.tl");
     
-    console.log("Contains dropbox.com:", isDropbox);
-    console.log("Contains google drive:", isDrive);
-    console.log("Contains wetransfer:", isWeTransfer);
-    
     if (isDropbox) {
-      console.log("Dropbox link detected");
       return { isValid: true, service: 'dropbox' };
     } else if (isDrive) {
-      console.log("Google Drive link detected");
       return { isValid: true, service: 'drive' };
     } else if (isWeTransfer) {
-      console.log("WeTransfer link detected");
       return { isValid: true, service: 'wetransfer' };
     }
     
-    console.log("No valid service detected");
     return { isValid: false, service: null };
   };
 
@@ -153,10 +139,8 @@ export function ClientIntakeForm() {
 
     try {
       if (url.includes("dropbox.com")) {
-        // For Dropbox, try to get meaningful names
-        let folderName = "Dropbox Folder";
+        let folderName = "Dropbox";
         
-        // For this demo, since we know it's the "Crowd Scene PREMASTER FILES" folder
         if (url.includes("6pwxohhre8umzo12vzucx")) {
           folderName = "Crowd Scene PREMASTER FILES";
         }
@@ -167,7 +151,6 @@ export function ClientIntakeForm() {
         return;
       }
       
-      // For Google Drive - just verify and show platform name
       if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
         setMixFiles(files => files.map(file => 
           file.id === fileId ? { ...file, title: "Google Drive", isLoading: false } : file
@@ -175,7 +158,6 @@ export function ClientIntakeForm() {
         return;
       }
 
-      // For WeTransfer - just verify and show platform name
       if (url.includes("wetransfer.com") || url.includes("we.tl")) {
         setMixFiles(files => files.map(file => 
           file.id === fileId ? { ...file, title: "WeTransfer", isLoading: false } : file
@@ -187,7 +169,6 @@ export function ClientIntakeForm() {
       console.error("Error fetching title:", error);
     }
 
-    // Fallback - remove loading state
     setMixFiles(files => files.map(file => 
       file.id === fileId ? { ...file, isLoading: false } : file
     ));
@@ -196,7 +177,6 @@ export function ClientIntakeForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!projectType || !email || tracks.some(track => !track.title)) {
       toast({
         title: "Please fill in all required fields",
@@ -227,38 +207,30 @@ export function ClientIntakeForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Music className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Audio Mastering Services
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">
+    <div className="min-h-screen bg-white py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-normal text-black mb-3">
+            Audio Mastering Services
+          </h1>
+          <p className="text-gray-600 text-lg font-light">
             Professional mastering for your music project
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-10">
           {/* Project Details */}
-          <Card className="bg-gradient-card shadow-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Music className="h-5 w-5 text-primary" />
-                Project Details
-              </CardTitle>
-              <CardDescription>
-                Tell us about your music project
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-sm p-8">
+            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+              <Music className="h-5 w-5 text-black" />
+              Project Details
+            </h2>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="project-type">Project Type *</Label>
+                  <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
                   <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
-                    <SelectTrigger className="bg-input border-border">
+                    <SelectTrigger className="bg-white border-gray-300 rounded-sm">
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -270,7 +242,7 @@ export function ClientIntakeForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="num-tracks">Number of Tracks</Label>
+                  <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
                   <Input
                     id="num-tracks"
                     type="number"
@@ -278,13 +250,13 @@ export function ClientIntakeForm() {
                     max="50"
                     value={numTracks}
                     onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
-                    className="bg-input border-border"
+                    className="bg-white border-gray-300 rounded-sm"
                   />
                 </div>
               </div>
 
-              {/* ISRC Toggle - Moved up */}
-              <div className="flex items-center justify-between p-4 bg-accent/20 rounded-lg border border-border">
+              {/* ISRC Toggle */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-sm border border-gray-200">
                 <div className="flex items-center space-x-3">
                   <Switch
                     id="has-isrcs"
@@ -292,10 +264,10 @@ export function ClientIntakeForm() {
                     onCheckedChange={setHasISRCs}
                   />
                   <div className="space-y-1">
-                    <Label htmlFor="has-isrcs" className="text-sm font-medium">
+                    <Label htmlFor="has-isrcs" className="text-sm font-medium text-black">
                       ISRCs to embed?
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-600">
                       International Standard Recording Codes for digital distribution
                     </p>
                   </div>
@@ -305,7 +277,7 @@ export function ClientIntakeForm() {
                   variant="outline"
                   size="sm"
                   asChild
-                  className="border-border"
+                  className="border-gray-300 text-black hover:bg-gray-50"
                 >
                   <a 
                     href="https://www.aria.com.au/industry/isrc" 
@@ -321,15 +293,15 @@ export function ClientIntakeForm() {
 
               {/* Track List */}
               {tracks.length > 0 && (
-                <div className="space-y-4 animate-fade-in">
-                  <Label>Track List *</Label>
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-black">Track List *</Label>
                   <div className="space-y-4">
                     {tracks.map((track, index) => (
-                      <Card key={track.id} className="p-4 bg-accent/30 border-border">
+                      <div key={track.id} className="p-4 bg-gray-50 border border-gray-200 rounded-sm">
                         <div className="space-y-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="space-y-1">
-                              <Label htmlFor={`track-title-${index}`}>
+                              <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
                                 {index + 1}. Song Title *
                               </Label>
                               <Input
@@ -337,25 +309,25 @@ export function ClientIntakeForm() {
                                 value={track.title}
                                 onChange={(e) => updateTrack(index, "title", e.target.value)}
                                 placeholder={`Track ${index + 1} title`}
-                                className="bg-input border-border"
+                                className="bg-white border-gray-300 rounded-sm"
                               />
                             </div>
                             
                             {hasISRCs && (
-                              <div className="space-y-1 animate-fade-in">
-                                <Label htmlFor={`isrc-${index}`}>ISRC Code</Label>
+                              <div className="space-y-1">
+                                <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
                                 <Input
                                   id={`isrc-${index}`}
                                   value={track.isrc || ""}
                                   onChange={(e) => updateTrack(index, "isrc", e.target.value)}
                                   placeholder="US-ABC-XX-XXXXX"
-                                  className="bg-input border-border"
+                                  className="bg-white border-gray-300 rounded-sm"
                                 />
                               </div>
                             )}
                           </div>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -364,13 +336,13 @@ export function ClientIntakeForm() {
               {/* Mix Files */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Dropbox/Drive Link</Label>
+                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={addMixFile}
-                    className="border-border"
+                    className="border-gray-300 text-black hover:bg-gray-50"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add More Links
@@ -387,41 +359,41 @@ export function ClientIntakeForm() {
                               value={mixFile.url}
                               onChange={(e) => updateMixFile(mixFile.id, "url", e.target.value)}
                               placeholder="Dropbox/Drive link or file URL"
-                              className="bg-input border-border pr-20"
+                              className="bg-white border-gray-300 rounded-sm pr-20"
                             />
                             {(validation.isValid || mixFile.isLoading) && (
                               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                <Cloud className="h-4 w-4 text-primary" />
-                                {validation.isValid && <Check className="h-4 w-4 text-green-500" />}
+                                <Cloud className="h-4 w-4 text-black" />
+                                {validation.isValid && <Check className="h-4 w-4 text-green-600" />}
                               </div>
                             )}
                           </div>
                           
                           {/* Show title if available */}
                           {mixFile.title && (
-                            <div className="p-2 bg-accent/50 rounded border border-border animate-fade-in">
+                            <div className="p-3 bg-gray-50 rounded-sm border border-gray-200">
                               <div className="flex items-center gap-2">
-                                <Cloud className="h-4 w-4 text-primary" />
+                                <Cloud className="h-4 w-4 text-black" />
                                 <a 
                                   href={mixFile.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm font-medium text-primary hover:underline cursor-pointer"
+                                  className="text-sm font-medium text-black hover:underline cursor-pointer"
                                 >
                                   {mixFile.title}
                                 </a>
-                                <Check className="h-4 w-4 text-green-500" />
-                                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                <Check className="h-4 w-4 text-green-600" />
+                                <ExternalLink className="h-3 w-3 text-gray-600" />
                               </div>
                             </div>
                           )}
                           
                           {/* Loading state */}
                           {mixFile.isLoading && (
-                            <div className="p-2 bg-accent/30 rounded border border-border">
+                            <div className="p-3 bg-gray-50 rounded-sm border border-gray-200">
                               <div className="flex items-center gap-2">
-                                <Cloud className="h-4 w-4 text-primary animate-pulse" />
-                                <span className="text-sm text-muted-foreground">Loading title...</span>
+                                <Cloud className="h-4 w-4 text-black animate-pulse" />
+                                <span className="text-sm text-gray-600">Loading title...</span>
                               </div>
                             </div>
                           )}
@@ -431,7 +403,7 @@ export function ClientIntakeForm() {
                               value={mixFile.description}
                               onChange={(e) => updateMixFile(mixFile.id, "description", e.target.value)}
                               placeholder="Description (optional)"
-                              className="bg-input border-border text-sm"
+                              className="bg-white border-gray-300 rounded-sm text-sm"
                             />
                           )}
                         </div>
@@ -441,7 +413,7 @@ export function ClientIntakeForm() {
                             variant="ghost"
                             size="sm"
                             onClick={() => removeMixFile(mixFile.id)}
-                            className="mt-1 text-muted-foreground hover:text-destructive"
+                            className="mt-1 text-gray-600 hover:text-red-600"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -451,41 +423,39 @@ export function ClientIntakeForm() {
                   })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Timeline & Requirements */}
-          <Card className="bg-gradient-card shadow-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Timeline & Requirements
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-sm p-8">
+            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+              <Clock className="h-5 w-5 text-black" />
+              Timeline & Requirements
+            </h2>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="deadline">Preferred Deadline</Label>
+                  <Label htmlFor="deadline" className="text-sm font-medium text-black">Preferred Deadline</Label>
                   <Input
                     id="deadline"
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
-                    className="bg-input border-border"
+                    className="bg-white border-gray-300 rounded-sm"
                   />
                 </div>
 
-                <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg border border-border">
+                <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-sm border border-gray-200">
                   <Checkbox
                     id="rush"
                     checked={isRush}
                     onCheckedChange={(checked) => setIsRush(checked === true)}
                   />
                   <div className="space-y-1">
-                    <Label htmlFor="rush" className="text-sm font-medium">
+                    <Label htmlFor="rush" className="text-sm font-medium text-black">
                       Rush order?
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-600">
                       Need it faster than usual turnaround
                     </p>
                   </div>
@@ -493,14 +463,14 @@ export function ClientIntakeForm() {
               </div>
 
               {isRush && (
-                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg animate-fade-in">
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-sm">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-primary">
+                      <p className="text-sm font-medium text-yellow-800">
                         Rush Surcharge May Apply
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-yellow-700 mt-1">
                         We'll confirm pricing and availability for expedited delivery.
                       </p>
                     </div>
@@ -510,7 +480,7 @@ export function ClientIntakeForm() {
 
               {/* Master Formats */}
               <div className="space-y-4">
-                <Label>Master Formats *</Label>
+                <Label className="text-sm font-medium text-black">Master Formats *</Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {["Streaming", "Vinyl", "CD", "HD Digital"].map((format) => (
                     <div key={format} className="flex items-center space-x-2">
@@ -521,7 +491,7 @@ export function ClientIntakeForm() {
                       />
                       <Label 
                         htmlFor={format.toLowerCase().replace(" ", "-")}
-                        className="text-sm font-medium"
+                        className="text-sm font-medium text-black"
                       >
                         {format}
                       </Label>
@@ -531,67 +501,65 @@ export function ClientIntakeForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Project Notes / Preferences (optional)</Label>
+                <Label htmlFor="notes" className="text-sm font-medium text-black">Project Notes / Preferences (optional)</Label>
                 <Textarea
                   id="notes"
                   value={projectNotes}
                   onChange={(e) => setProjectNotes(e.target.value)}
                   rows={4}
-                  className="bg-input border-border"
+                  className="bg-white border-gray-300 rounded-sm"
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Contact Information */}
-          <Card className="bg-gradient-card shadow-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-sm p-8">
+            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+              <User className="h-5 w-5 text-black" />
+              Contact Information
+            </h2>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email" className="text-sm font-medium text-black">Email Address *</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="pl-10 bg-input border-border"
+                      className="pl-10 bg-white border-gray-300 rounded-sm"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-sm font-medium text-black">Phone Number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
                     <Input
                       id="phone"
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="pl-10 bg-input border-border"
+                      className="pl-10 bg-white border-gray-300 rounded-sm"
                     />
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <div className="flex justify-center">
             <Button 
               type="submit" 
               size="lg" 
-              className="bg-gradient-primary hover:shadow-elegant transition-all duration-300 px-8"
+              className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-sm font-medium"
             >
               <Upload className="h-4 w-4 mr-2" />
               Submit Project Request
