@@ -198,7 +198,12 @@ export function ClientIntakeForm() {
       newErrors.masterFormats = "At least one master format is required";
     }
 
-    if (botCheck.toLowerCase() !== "five" && botCheck !== "5") {
+    // Check if at least one mix file has a URL
+    if (!mixFiles.some(file => file.url.trim())) {
+      newErrors.mixFiles = "At least one mix file link is required";
+    }
+
+    if (botCheck.toLowerCase() !== "listen") {
       newErrors.botCheck = "Please answer the bot protection question correctly";
     }
 
@@ -213,7 +218,8 @@ export function ClientIntakeForm() {
       /\S+@\S+\.\S+/.test(email) &&
       tracks.every(track => track.title.trim()) &&
       masterFormats.length > 0 &&
-      (botCheck.toLowerCase() === "five" || botCheck === "5")
+      mixFiles.some(file => file.url.trim()) &&
+      botCheck.toLowerCase() === "listen"
     );
   };
 
@@ -417,7 +423,7 @@ export function ClientIntakeForm() {
               {/* Mix Files */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link</Label>
+                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link *</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -429,6 +435,7 @@ export function ClientIntakeForm() {
                     Add More Links
                   </Button>
                 </div>
+                {errors.mixFiles && <p className="text-sm text-red-600 mb-2">{errors.mixFiles}</p>}
                 <div className="space-y-3">
                   {mixFiles.map((mixFile, index) => {
                     const validation = validateFileLink(mixFile.url);
@@ -440,7 +447,7 @@ export function ClientIntakeForm() {
                               value={mixFile.url}
                               onChange={(e) => updateMixFile(mixFile.id, "url", e.target.value)}
                               placeholder="Dropbox/Drive link or file URL"
-                              className="bg-white border-gray-300 rounded-sm pr-20"
+                              className={`bg-white border-gray-300 rounded-sm pr-20 ${errors.mixFiles ? 'border-red-500' : ''}`}
                             />
                             {(validation.isValid || mixFile.isLoading) && (
                               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -522,8 +529,10 @@ export function ClientIntakeForm() {
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
+                    min={new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                     className="bg-white border-gray-300 rounded-sm"
                   />
+                  <p className="text-xs text-gray-600">Minimum delivery time is 10 business days</p>
                 </div>
 
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-sm border border-gray-200">
@@ -649,14 +658,14 @@ export function ClientIntakeForm() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="bot-check" className="text-sm font-medium text-black">
-                  What number comes after four? (spell it out) *
+                  If you rearrange the letters in "SILENT", what English word do you get? *
                 </Label>
                 <Input
                   id="bot-check"
                   type="text"
                   value={botCheck}
                   onChange={(e) => setBotCheck(e.target.value)}
-                  placeholder="Type your answer..."
+                  placeholder="Type the word..."
                   className={`bg-white border-gray-300 rounded-sm ${errors.botCheck ? 'border-red-500' : ''}`}
                   required
                 />
