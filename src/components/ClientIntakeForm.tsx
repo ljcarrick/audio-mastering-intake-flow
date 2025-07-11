@@ -37,7 +37,8 @@ export function ClientIntakeForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
-  const [botCheck, setBotCheck] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [honeypot2, setHoneypot2] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -203,8 +204,9 @@ export function ClientIntakeForm() {
       newErrors.mixFiles = "At least one mix file link is required";
     }
 
-    if (botCheck.toLowerCase() !== "listen") {
-      newErrors.botCheck = "Please answer the bot protection question correctly";
+    // Check if honeypot fields are filled (indicates bot)
+    if (honeypot || honeypot2) {
+      newErrors.bot = "Bot detected";
     }
 
     setErrors(newErrors);
@@ -219,12 +221,19 @@ export function ClientIntakeForm() {
       tracks.every(track => track.title.trim()) &&
       masterFormats.length > 0 &&
       mixFiles.some(file => file.url.trim()) &&
-      botCheck.toLowerCase() === "listen"
+      !honeypot &&
+      !honeypot2
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check honeypot fields first (silent fail for bots)
+    if (honeypot || honeypot2) {
+      console.log("Bot detected - form submission blocked");
+      return;
+    }
     
     if (!validateForm()) {
       toast({
@@ -277,7 +286,8 @@ export function ClientIntakeForm() {
       setProjectNotes("");
       setEmail("");
       setPhone("");
-      setBotCheck("");
+      setHoneypot("");
+      setHoneypot2("");
       setErrors({});
 
     } catch (error) {
@@ -649,29 +659,28 @@ export function ClientIntakeForm() {
             </div>
           </div>
 
-          {/* Bot Protection */}
-          <div className="bg-white border border-gray-200 rounded-sm p-8">
-            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-black" />
-              Bot Protection
-            </h2>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bot-check" className="text-sm font-medium text-black">
-                  If you rearrange the letters in "SILENT", what English word do you get? *
-                </Label>
-                <Input
-                  id="bot-check"
-                  type="text"
-                  value={botCheck}
-                  onChange={(e) => setBotCheck(e.target.value)}
-                  placeholder="Type the word..."
-                  className={`bg-white border-gray-300 rounded-sm ${errors.botCheck ? 'border-red-500' : ''}`}
-                  required
-                />
-                {errors.botCheck && <p className="text-sm text-red-600">{errors.botCheck}</p>}
-              </div>
-            </div>
+          {/* Honeypot fields - hidden from users but visible to bots */}
+          <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
+            <label htmlFor="website">Website (leave blank)</label>
+            <input
+              type="text"
+              id="website"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            <label htmlFor="company">Company (leave blank)</label>
+            <input
+              type="text"
+              id="company"
+              name="company"
+              value={honeypot2}
+              onChange={(e) => setHoneypot2(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
           </div>
 
           <div className="flex justify-center">
