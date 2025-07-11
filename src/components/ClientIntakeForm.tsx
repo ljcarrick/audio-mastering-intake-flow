@@ -207,13 +207,13 @@ export function ClientIntakeForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
+    <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-normal text-black mb-3">
+          <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
             Audio Mastering Services
           </h1>
-          <p className="text-gray-600 text-lg font-light">
+          <p className="text-gray-700 text-lg font-light">
             Professional mastering for your music project
           </p>
         </div>
