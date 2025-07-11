@@ -661,7 +661,7 @@ export function ClientIntakeForm() {
 
           {/* Honeypot fields - hidden from users but visible to bots */}
           <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-            <label htmlFor="website">Website (leave blank)</label>
+            <label htmlFor="website">Website *</label>
             <input
               type="text"
               id="website"
@@ -671,7 +671,7 @@ export function ClientIntakeForm() {
               tabIndex={-1}
               autoComplete="off"
             />
-            <label htmlFor="company">Company (leave blank)</label>
+            <label htmlFor="company">Company Name *</label>
             <input
               type="text"
               id="company"
