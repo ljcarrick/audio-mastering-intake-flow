@@ -427,14 +427,14 @@ export function ClientIntakeForm() {
       console.log("EmailJS Credentials:", {
         serviceId: 'service_oi7xq61',
         templateId: 'template_fo3ohen', 
-        publicKey: '7r-gHxfrqZAXNGSvcr98c'
+        publicKey: 'uImkSaSkdRPL1Sk0v'
       });
       
       await emailjs.send(
         'service_oi7xq61', // Your EmailJS service ID
         'template_fo3ohen', // Your EmailJS template ID
         templateParams,
-        '7r-gHxfrqZAXNGSvcr98c' // Your EmailJS public key
+        'uImkSaSkdRPL1Sk0v' // Your correct EmailJS public key
       );
 
       toast({
