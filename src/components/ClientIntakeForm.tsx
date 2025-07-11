@@ -211,11 +211,8 @@ export function ClientIntakeForm() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
-            Audio Mastering Services
+            LC - Mastering Request
           </h1>
-          <p className="text-gray-700 text-lg font-light">
-            Professional mastering for your music project
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-10">
@@ -480,7 +477,7 @@ export function ClientIntakeForm() {
 
               {/* Master Formats */}
               <div className="space-y-4">
-                <Label className="text-sm font-medium text-black">Master Formats *</Label>
+                <Label className="text-sm font-medium text-black">Required Master Formats *</Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {["Streaming", "Vinyl", "CD", "HD Digital"].map((format) => (
                     <div key={format} className="flex items-center space-x-2">
