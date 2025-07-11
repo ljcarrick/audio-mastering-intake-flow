@@ -817,10 +817,12 @@ export function ClientIntakeForm() {
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
-                    min={new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                    min={new Date(Date.now() + (projectType === "album" ? 10 : 5) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                     className="bg-white border-gray-300 rounded-sm"
                   />
-                  <p className="text-xs text-gray-600">Minimum delivery time is 10 business days</p>
+                  <p className="text-xs text-gray-600">
+                    Minimum delivery time is {projectType === "album" ? "10" : "5"} business days
+                  </p>
                 </div>
 
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-sm border border-gray-200">
@@ -831,7 +833,7 @@ export function ClientIntakeForm() {
                   />
                   <div className="space-y-1">
                     <Label htmlFor="rush" className="text-sm font-medium text-black">
-                      Rush order?
+                      Rush
                     </Label>
                     <p className="text-xs text-gray-600">
                       Need it faster than usual turnaround
@@ -903,7 +905,7 @@ export function ClientIntakeForm() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-black">Email Address *</Label>
+                  <Label htmlFor="email" className="text-sm font-medium text-black">Your Email Address *</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-600" />
                     <Input
@@ -932,6 +934,100 @@ export function ClientIntakeForm() {
                       className="pl-10 bg-white border-gray-300 rounded-sm"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-sm font-medium text-black">Role *</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.role ? 'border-red-500' : ''}`}>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="artist">Artist</SelectItem>
+                    <SelectItem value="mixer">Mixer</SelectItem>
+                    <SelectItem value="label">Label</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && <p className="text-sm text-red-600">{errors.role}</p>}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="team-members"
+                  checked={hasTeamMembers}
+                  onCheckedChange={(checked) => setHasTeamMembers(checked === true)}
+                />
+                <Label htmlFor="team-members">Add team members (up to 2)</Label>
+              </div>
+
+              {hasTeamMembers && (
+                <div className="space-y-3 pl-6 border-l-2 border-gray-200">
+                  {teamMembers.map((member, index) => (
+                    <div key={member.id}>
+                      <Label htmlFor={`team-${index}`} className="text-sm font-medium text-black">
+                        Team Member {index + 1} Role
+                      </Label>
+                      <Select value={member.role} onValueChange={(value) => updateTeamMember(index, value)}>
+                        <SelectTrigger className="bg-white border-gray-300 rounded-sm">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="artist">Artist</SelectItem>
+                          <SelectItem value="mixer">Mixer</SelectItem>
+                          <SelectItem value="label">Label</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="bill-to"
+                  checked={billToSelf}
+                  onCheckedChange={(checked) => setBillToSelf(checked === true)}
+                />
+                <Label htmlFor="bill-to">Bill To</Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Information */}
+          <div className="bg-white border border-gray-200 rounded-sm p-8">
+            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+              <Mail className="h-5 w-5 text-black" />
+              Billing Information
+            </h2>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="billing-name" className="text-sm font-medium text-black">Name *</Label>
+                  <Input
+                    id="billing-name"
+                    type="text"
+                    value={billingInfo.name}
+                    onChange={(e) => updateBillingInfo('name', e.target.value)}
+                    placeholder="Billing name"
+                    className={`bg-white border-gray-300 rounded-sm ${errors.billingName ? 'border-red-500' : ''}`}
+                    disabled={billToSelf}
+                  />
+                  {errors.billingName && <p className="text-sm text-red-600">{errors.billingName}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="billing-email" className="text-sm font-medium text-black">Email *</Label>
+                  <Input
+                    id="billing-email"
+                    type="email"
+                    value={billingInfo.email}
+                    onChange={(e) => updateBillingInfo('email', e.target.value)}
+                    placeholder="billing@email.com"
+                    className={`bg-white border-gray-300 rounded-sm ${errors.billingEmail ? 'border-red-500' : ''}`}
+                    disabled={billToSelf}
+                  />
+                  {errors.billingEmail && <p className="text-sm text-red-600">{errors.billingEmail}</p>}
                 </div>
               </div>
             </div>
