@@ -148,23 +148,10 @@ export function ClientIntakeForm() {
 
     try {
       if (url.includes("dropbox.com")) {
-        // For now, extract a meaningful name from the URL structure
-        // Later we can implement server-side fetching if needed
-        
-        // Try to extract folder name patterns from common Dropbox URLs
+        // For Dropbox, try to get meaningful names
         let folderName = "Dropbox Folder";
         
-        // Look for folder patterns in the URL
-        const pathSegments = url.split('/');
-        const foIndex = pathSegments.findIndex(segment => segment === 'fo');
-        
-        if (foIndex !== -1 && pathSegments[foIndex + 1]) {
-          // For shared folder links, use a more user-friendly name
-          folderName = "Shared Folder";
-        }
-        
         // For this demo, since we know it's the "Crowd Scene PREMASTER FILES" folder
-        // we can set it directly for now
         if (url.includes("6pwxohhre8umzo12vzucx")) {
           folderName = "Crowd Scene PREMASTER FILES";
         }
@@ -175,18 +162,18 @@ export function ClientIntakeForm() {
         return;
       }
       
-      // For drive.google.com links
+      // For Google Drive - just verify and show platform name
       if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
         setMixFiles(files => files.map(file => 
-          file.id === fileId ? { ...file, title: "Google Drive Folder", isLoading: false } : file
+          file.id === fileId ? { ...file, title: "Google Drive", isLoading: false } : file
         ));
         return;
       }
 
-      // For wetransfer links
+      // For WeTransfer - just verify and show platform name
       if (url.includes("wetransfer.com") || url.includes("we.tl")) {
         setMixFiles(files => files.map(file => 
-          file.id === fileId ? { ...file, title: "WeTransfer Files", isLoading: false } : file
+          file.id === fileId ? { ...file, title: "WeTransfer", isLoading: false } : file
         ));
         return;
       }
