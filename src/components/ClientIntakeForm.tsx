@@ -577,22 +577,22 @@ export function ClientIntakeForm() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-12">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8">
           <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
             LC - Mastering Request
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Project Details */}
-          <div className="bg-white border border-gray-200 rounded-sm p-8">
-            <h2 className="text-xl font-normal text-black mb-6">
+          <div className="bg-white border border-gray-200 rounded-sm p-6">
+            <h2 className="text-xl font-normal text-black mb-4">
               Project Details
             </h2>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
                   <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
                   <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
                     <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.projectType ? 'border-red-500' : ''}`}>
@@ -607,7 +607,7 @@ export function ClientIntakeForm() {
                   {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
                   <Input
                     id="num-tracks"
@@ -621,8 +621,8 @@ export function ClientIntakeForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
                   <Label htmlFor="artist" className="text-sm font-medium text-black">Artist *</Label>
                   <Input
                     id="artist"
@@ -635,7 +635,7 @@ export function ClientIntakeForm() {
                   {errors.artist && <p className="text-sm text-red-600">{errors.artist}</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="title" className="text-sm font-medium text-black">
                     {projectType === "ep" ? "EP Title" : 
                      projectType === "album" ? "Album Title" : 
@@ -930,29 +930,37 @@ export function ClientIntakeForm() {
           </div>
 
           {/* Contact Information */}
-          <div className="bg-white border border-gray-200 rounded-sm p-8">
-            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+          <div className="bg-white border border-gray-200 rounded-sm p-6">
+            <h2 className="text-xl font-normal text-black mb-4 flex items-center gap-3">
               <User className="h-5 w-5 text-black" />
               Contact Information
             </h2>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse table-fixed">
+                  <colgroup>
+                    <col className="w-[25%]" />
+                    <col className="w-[30%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[12%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[7%]" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Name *</th>
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Email *</th>
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Phone</th>
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Role</th>
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Bill To</th>
-                      <th className="text-left py-3 px-3 text-sm font-medium text-black">Actions</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Name *</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Email *</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Phone</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Role</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Bill To</th>
+                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {contacts.map((contact, index) => (
                       <tr key={contact.id} className="border-b border-gray-100">
-                        <td className="py-3 px-3">
+                        <td className="py-2 px-2">
                           <Input
                             value={contact.name}
                             onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
@@ -960,7 +968,7 @@ export function ClientIntakeForm() {
                             className="bg-white border-gray-300 rounded-sm"
                           />
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2 px-2">
                           <Input
                             type="email"
                             value={contact.email}
@@ -969,7 +977,7 @@ export function ClientIntakeForm() {
                             className="bg-white border-gray-300 rounded-sm"
                           />
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2 px-2">
                           <Input
                             type="tel"
                             value={contact.phone}
@@ -978,7 +986,7 @@ export function ClientIntakeForm() {
                             className="bg-white border-gray-300 rounded-sm"
                           />
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2 px-2">
                           <Select
                             value={contact.role}
                             onValueChange={(value) => updateContact(contact.id, 'role', value)}
@@ -994,13 +1002,13 @@ export function ClientIntakeForm() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="py-3 px-3 text-center">
+                        <td className="py-2 px-2 text-center">
                           <Checkbox
                             checked={contact.billTo}
                             onCheckedChange={(checked) => updateContact(contact.id, 'billTo', checked === true)}
                           />
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2 px-2">
                           {contacts.length > 1 && (
                             <Button
                               type="button"
