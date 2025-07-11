@@ -26,6 +26,16 @@ interface MixFile {
   isLoading?: boolean;
 }
 
+interface TeamMember {
+  id: string;
+  role: string;
+}
+
+interface BillingInfo {
+  name: string;
+  email: string;
+}
+
 export function ClientIntakeForm() {
   const [projectType, setProjectType] = useState<ProjectType>("");
   const [artist, setArtist] = useState("");
@@ -39,6 +49,14 @@ export function ClientIntakeForm() {
   const [projectNotes, setProjectNotes] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("");
+  const [hasTeamMembers, setHasTeamMembers] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
+    { id: "team-1", role: "" },
+    { id: "team-2", role: "" }
+  ]);
+  const [billToSelf, setBillToSelf] = useState(true);
+  const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "" });
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
@@ -76,6 +94,23 @@ export function ClientIntakeForm() {
     updatedTracks[index] = { ...updatedTracks[index], [field]: value };
     setTracks(updatedTracks);
   };
+
+  const updateTeamMember = (index: number, role: string) => {
+    const updatedMembers = [...teamMembers];
+    updatedMembers[index] = { ...updatedMembers[index], role };
+    setTeamMembers(updatedMembers);
+  };
+
+  const updateBillingInfo = (field: keyof BillingInfo, value: string) => {
+    setBillingInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Auto-fill billing info when "Bill To" is checked
+  useEffect(() => {
+    if (billToSelf) {
+      setBillingInfo({ name: artist, email });
+    }
+  }, [billToSelf, artist, email]);
 
   const addMixFile = () => {
     const newMixFile: MixFile = {
@@ -202,6 +237,20 @@ export function ClientIntakeForm() {
       newErrors.email = "Please enter a valid email address";
     }
 
+    if (!role) {
+      newErrors.role = "Role is required";
+    }
+
+    if (!billingInfo.name.trim()) {
+      newErrors.billingName = "Billing name is required";
+    }
+
+    if (!billingInfo.email) {
+      newErrors.billingEmail = "Billing email is required";
+    } else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) {
+      newErrors.billingEmail = "Please enter a valid billing email address";
+    }
+
     if (tracks.some(track => !track.title.trim())) {
       newErrors.tracks = "All track titles are required";
     }
@@ -231,6 +280,10 @@ export function ClientIntakeForm() {
       (projectType === "single" || title.trim()) &&
       email &&
       /\S+@\S+\.\S+/.test(email) &&
+      role &&
+      billingInfo.name.trim() &&
+      billingInfo.email &&
+      /\S+@\S+\.\S+/.test(billingInfo.email) &&
       tracks.every(track => track.title.trim()) &&
       masterFormats.length > 0 &&
       mixFiles.some(file => file.url.trim()) &&
@@ -416,8 +469,12 @@ export function ClientIntakeForm() {
         num_tracks: numTracks,
         email: email,
         phone: phone || 'Not provided',
+        role: role,
+        team_members: hasTeamMembers ? teamMembers.filter(m => m.role).map(m => m.role).join(', ') : 'None',
+        billing_name: billingInfo.name,
+        billing_email: billingInfo.email,
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        is_rush: isRush ? 'YES - Rush Order' : 'Standard Priority',
+        is_rush: isRush ? 'YES - Rush' : 'Standard Priority',
         master_formats: masterFormats.join(', '),
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
         file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}${f.description ? ` - ${f.description}` : ''}`).join('\n'),
@@ -460,6 +517,11 @@ export function ClientIntakeForm() {
       setHasISRCs(false);
       setDeadline("");
       setIsRush(false);
+      setRole("");
+      setHasTeamMembers(false);
+      setTeamMembers([{ id: "team-1", role: "" }, { id: "team-2", role: "" }]);
+      setBillToSelf(true);
+      setBillingInfo({ name: "", email: "" });
       setMasterFormats([]);
       setProjectNotes("");
       setEmail("");
