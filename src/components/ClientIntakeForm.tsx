@@ -543,7 +543,7 @@ export function ClientIntakeForm() {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="(555) 123-4567"
+                      placeholder="xxxx-xxx-xxx"
                       className="pl-10 bg-white border-gray-300 rounded-sm"
                     />
                   </div>
