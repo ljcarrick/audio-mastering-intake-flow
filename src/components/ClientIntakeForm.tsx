@@ -424,6 +424,12 @@ export function ClientIntakeForm() {
       };
 
       // Send email via EmailJS
+      console.log("EmailJS Credentials:", {
+        serviceId: 'service_oi7xq61',
+        templateId: 'template_fo3ohen', 
+        publicKey: '7r-gHxfrqZAXNGSvcr98c'
+      });
+      
       await emailjs.send(
         'service_oi7xq61', // Your EmailJS service ID
         'template_fo3ohen', // Your EmailJS template ID
