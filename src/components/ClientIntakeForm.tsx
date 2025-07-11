@@ -37,6 +37,9 @@ export function ClientIntakeForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
+  const [botCheck, setBotCheck] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   // Auto-fill track count based on project type
@@ -174,36 +177,113 @@ export function ClientIntakeForm() {
     ));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!projectType) {
+      newErrors.projectType = "Project type is required";
+    }
+
+    if (!email) {
+      newErrors.email = "Email address is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (tracks.some(track => !track.title.trim())) {
+      newErrors.tracks = "All track titles are required";
+    }
+
+    if (masterFormats.length === 0) {
+      newErrors.masterFormats = "At least one master format is required";
+    }
+
+    if (botCheck.toLowerCase() !== "five" && botCheck !== "5") {
+      newErrors.botCheck = "Please answer the bot protection question correctly";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const isFormValid = () => {
+    return (
+      projectType &&
+      email &&
+      /\S+@\S+\.\S+/.test(email) &&
+      tracks.every(track => track.title.trim()) &&
+      masterFormats.length > 0 &&
+      (botCheck.toLowerCase() === "five" || botCheck === "5")
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!projectType || !email || tracks.some(track => !track.title)) {
+    if (!validateForm()) {
       toast({
-        title: "Please fill in all required fields",
-        description: "Project type, email, and all track titles are required.",
+        title: "Please fix the errors below",
+        description: "All required fields must be completed.",
         variant: "destructive",
       });
       return;
     }
 
-    toast({
-      title: "Form submitted successfully!",
-      description: "We'll get back to you soon with a quote and timeline.",
-    });
+    setIsSubmitting(true);
 
-    console.log("Form data:", {
-      projectType,
-      numTracks,
-      tracks,
-      mixFiles,
-      hasISRCs,
-      deadline,
-      isRush,
-      masterFormats,
-      projectNotes,
-      email,
-      phone,
-    });
+    try {
+      // Prepare form data
+      const formData = {
+        projectType,
+        numTracks,
+        tracks,
+        mixFiles: mixFiles.filter(file => file.url), // Only include files with URLs
+        hasISRCs,
+        deadline,
+        isRush,
+        masterFormats,
+        projectNotes,
+        email,
+        phone,
+        submittedAt: new Date().toISOString(),
+      };
+
+      // In a real app, this would be sent to your backend
+      console.log("Submitting form data:", formData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      toast({
+        title: "Mastering request submitted!",
+        description: "We'll review your project and get back to you within 24 hours.",
+      });
+
+      // Reset form
+      setProjectType("");
+      setNumTracks(1);
+      setTracks([]);
+      setMixFiles([{ id: "mix-1", url: "", description: "" }]);
+      setHasISRCs(false);
+      setDeadline("");
+      setIsRush(false);
+      setMasterFormats([]);
+      setProjectNotes("");
+      setEmail("");
+      setPhone("");
+      setBotCheck("");
+      setErrors({});
+
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast({
+        title: "Submission failed",
+        description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -227,7 +307,7 @@ export function ClientIntakeForm() {
                 <div className="space-y-2">
                   <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
                   <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
-                    <SelectTrigger className="bg-white border-gray-300 rounded-sm">
+                    <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.projectType ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -236,6 +316,7 @@ export function ClientIntakeForm() {
                       <SelectItem value="album">Album</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -291,7 +372,10 @@ export function ClientIntakeForm() {
               {/* Track List */}
               {tracks.length > 0 && (
                 <div className="space-y-4">
-                  <Label className="text-sm font-medium text-black">Track List *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-black">Track List *</Label>
+                    {errors.tracks && <p className="text-sm text-red-600">{errors.tracks}</p>}
+                  </div>
                   <div className="space-y-4">
                     {tracks.map((track, index) => (
                       <div key={track.id} className="p-4 bg-gray-50 border border-gray-200 rounded-sm">
@@ -301,13 +385,13 @@ export function ClientIntakeForm() {
                               <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
                                 {index + 1}. Song Title *
                               </Label>
-                              <Input
-                                id={`track-title-${index}`}
-                                value={track.title}
-                                onChange={(e) => updateTrack(index, "title", e.target.value)}
-                                placeholder={`Track ${index + 1} title`}
-                                className="bg-white border-gray-300 rounded-sm"
-                              />
+                                <Input
+                                  id={`track-title-${index}`}
+                                  value={track.title}
+                                  onChange={(e) => updateTrack(index, "title", e.target.value)}
+                                  placeholder={`Track ${index + 1} title`}
+                                  className={`bg-white border-gray-300 rounded-sm ${errors.tracks ? 'border-red-500' : ''}`}
+                                />
                             </div>
                             
                             {hasISRCs && (
@@ -477,7 +561,10 @@ export function ClientIntakeForm() {
 
               {/* Master Formats */}
               <div className="space-y-4">
-                <Label className="text-sm font-medium text-black">Required Master Formats *</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-black">Required Master Formats *</Label>
+                  {errors.masterFormats && <p className="text-sm text-red-600">{errors.masterFormats}</p>}
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {["Streaming", "Vinyl", "CD", "HD Digital"].map((format) => (
                     <div key={format} className="flex items-center space-x-2">
@@ -528,10 +615,11 @@ export function ClientIntakeForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="pl-10 bg-white border-gray-300 rounded-sm"
+                      className={`pl-10 bg-white border-gray-300 rounded-sm ${errors.email ? 'border-red-500' : ''}`}
                       required
                     />
                   </div>
+                  {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -552,14 +640,53 @@ export function ClientIntakeForm() {
             </div>
           </div>
 
+          {/* Bot Protection */}
+          <div className="bg-white border border-gray-200 rounded-sm p-8">
+            <h2 className="text-xl font-normal text-black mb-6 flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-black" />
+              Bot Protection
+            </h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bot-check" className="text-sm font-medium text-black">
+                  What number comes after four? (spell it out) *
+                </Label>
+                <Input
+                  id="bot-check"
+                  type="text"
+                  value={botCheck}
+                  onChange={(e) => setBotCheck(e.target.value)}
+                  placeholder="Type your answer..."
+                  className={`bg-white border-gray-300 rounded-sm ${errors.botCheck ? 'border-red-500' : ''}`}
+                  required
+                />
+                {errors.botCheck && <p className="text-sm text-red-600">{errors.botCheck}</p>}
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-center">
             <Button 
               type="submit" 
               size="lg" 
-              className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-sm font-medium"
+              disabled={!isFormValid() || isSubmitting}
+              className={`px-8 py-3 rounded-sm font-medium transition-all duration-200 ${
+                !isFormValid() || isSubmitting
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' 
+                  : 'bg-black hover:bg-gray-800 text-white'
+              }`}
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Submit Project Request
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-gray-500 border-t-transparent"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Submit Project Request
+                </>
+              )}
             </Button>
           </div>
         </form>
