@@ -89,7 +89,18 @@ export function ClientIntakeForm() {
 
   const updateTrack = (index: number, field: keyof Track, value: string) => {
     const updatedTracks = [...tracks];
-    updatedTracks[index] = { ...updatedTracks[index], [field]: value };
+    
+    // Special handling for ISRC field
+    if (field === 'isrc') {
+      // Remove all dashes and non-alphanumeric characters, keep only letters and numbers
+      const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      // Limit to 12 characters
+      const limitedValue = cleanValue.slice(0, 12);
+      updatedTracks[index] = { ...updatedTracks[index], [field]: limitedValue };
+    } else {
+      updatedTracks[index] = { ...updatedTracks[index], [field]: value };
+    }
+    
     setTracks(updatedTracks);
   };
 
@@ -467,19 +478,44 @@ export function ClientIntakeForm() {
          <div class="section">
             <div class="section-title">📞 Contact Information</div>
             ${contacts.filter(c => c.name || c.email).map(c => `
+            <div style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                <div class="field-group">
+                    <div class="field">
+                        <div class="field-label">Name</div>
+                        <div class="field-value">${c.name || 'Not provided'}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Email</div>
+                        <div class="field-value"><a href="mailto:${c.email}" style="color: #2563eb;">${c.email || 'Not provided'}</a></div>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <div class="field">
+                        <div class="field-label">Phone</div>
+                        <div class="field-value">${c.phone ? `<a href="tel:${c.phone}" style="color: #2563eb;">${c.phone}</a>` : 'Not provided'}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Role</div>
+                        <div class="field-value">${c.role || 'Not specified'}</div>
+                    </div>
+                </div>
+                ${c.billTo ? '<p style="margin-top: 8px; font-size: 12px; color: #6b7280; font-weight: 500;">📧 Billing Contact</p>' : ''}
+            </div>
+            `).join('')}
+         </div>
+
+         <div class="section">
+            <div class="section-title">💳 Billing Information</div>
             <div class="field-group">
                 <div class="field">
-                    <div class="field-label">${c.name}</div>
-                    <div class="field-value"><a href="mailto:${c.email}" style="color: #2563eb;">${c.email}</a></div>
+                    <div class="field-label">Billing Name</div>
+                    <div class="field-value">${billingInfo.name || 'Not provided'}</div>
                 </div>
-                ${c.phone ? `
                 <div class="field">
-                    <div class="field-label">Phone</div>
-                    <div class="field-value"><a href="tel:${c.phone}" style="color: #2563eb;">${c.phone}</a></div>
-                </div>` : ''}
+                    <div class="field-label">Billing Email</div>
+                    <div class="field-value"><a href="mailto:${billingInfo.email}" style="color: #2563eb;">${billingInfo.email || 'Not provided'}</a></div>
+                </div>
             </div>
-            ${c.billTo ? '<p style="margin-top: 8px; font-size: 12px; color: #6b7280;">📧 Billing Contact</p>' : ''}
-            `).join('')}
          </div>
 
         ${projectNotes ? `
@@ -725,13 +761,17 @@ export function ClientIntakeForm() {
                           {hasISRCs && (
                             <div className="space-y-1">
                               <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
-                              <Input
+                               <Input
                                 id={`isrc-${index}`}
                                 value={track.isrc || ""}
                                 onChange={(e) => updateTrack(index, "isrc", e.target.value)}
-                                placeholder="US-ABC-XX-XXXXX"
-                                className="bg-white border-gray-300 rounded-sm"
+                                placeholder="12 characters (dashes auto-removed)"
+                                maxLength={12}
+                                className="bg-white border-gray-300 rounded-sm font-mono"
                               />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Enter exactly 12 characters (e.g., USABC1234567). Dashes will be removed automatically.
+                              </p>
                             </div>
                           )}
                         </div>
