@@ -92,11 +92,14 @@ export function ClientIntakeForm() {
     
     // Special handling for ISRC field
     if (field === 'isrc') {
-      // Remove all dashes and non-alphanumeric characters, keep only letters and numbers
-      const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-      // Limit to 12 characters
-      const limitedValue = cleanValue.slice(0, 12);
-      updatedTracks[index] = { ...updatedTracks[index], [field]: limitedValue };
+      // Allow input up to 15 characters (including dashes), then clean to 12
+      if (value.length <= 15) {
+        // Remove all dashes and non-alphanumeric characters, keep only letters and numbers
+        const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        // Limit to exactly 12 characters
+        const limitedValue = cleanValue.slice(0, 12);
+        updatedTracks[index] = { ...updatedTracks[index], [field]: limitedValue };
+      }
     } else {
       updatedTracks[index] = { ...updatedTracks[index], [field]: value };
     }
@@ -505,17 +508,17 @@ export function ClientIntakeForm() {
          </div>
 
          <div class="section">
-            <div class="section-title">💳 Billing Information</div>
-            <div class="field-group">
-                <div class="field">
-                    <div class="field-label">Billing Name</div>
-                    <div class="field-value">${billingInfo.name || 'Not provided'}</div>
-                </div>
-                <div class="field">
-                    <div class="field-label">Billing Email</div>
-                    <div class="field-value"><a href="mailto:${billingInfo.email}" style="color: #2563eb;">${billingInfo.email || 'Not provided'}</a></div>
-                </div>
-            </div>
+             <div class="section-title">💳 Billing Information</div>
+             <div class="field-group">
+                 <div class="field">
+                     <div class="field-label">Billing Name</div>
+                     <div class="field-value">${billingInfo.name || 'Not provided'}</div>
+                 </div>
+                 <div class="field">
+                     <div class="field-label">Billing Email</div>
+                     <div class="field-value">${billingInfo.email ? `<a href="mailto:${billingInfo.email}" style="color: #2563eb;">${billingInfo.email}</a>` : 'Not provided'}</div>
+                 </div>
+             </div>
          </div>
 
         ${projectNotes ? `
@@ -762,16 +765,16 @@ export function ClientIntakeForm() {
                             <div className="space-y-1">
                               <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
                                <Input
-                                id={`isrc-${index}`}
-                                value={track.isrc || ""}
-                                onChange={(e) => updateTrack(index, "isrc", e.target.value)}
-                                placeholder="12 characters (dashes auto-removed)"
-                                maxLength={12}
-                                className="bg-white border-gray-300 rounded-sm font-mono"
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Enter exactly 12 characters (e.g., USABC1234567). Dashes will be removed automatically.
-                              </p>
+                                 id={`isrc-${index}`}
+                                 value={track.isrc || ""}
+                                 onChange={(e) => updateTrack(index, "isrc", e.target.value)}
+                                 placeholder="USAB-12-34567 (dashes auto-removed)"
+                                 maxLength={15}
+                                 className="bg-white border-gray-300 rounded-sm font-mono"
+                               />
+                               <p className="text-xs text-gray-500 mt-1">
+                                 Enter 12 characters with or without dashes (e.g., USAB-12-34567). Final code will be 12 characters.
+                               </p>
                             </div>
                           )}
                         </div>
