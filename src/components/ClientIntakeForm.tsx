@@ -59,6 +59,8 @@ export function ClientIntakeForm() {
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
+  const [middleName, setMiddleName] = useState('');
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
