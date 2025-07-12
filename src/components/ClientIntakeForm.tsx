@@ -59,8 +59,6 @@ export function ClientIntakeForm() {
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
-  const [middleName, setMiddleName] = useState('');
-
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -351,7 +349,7 @@ export function ClientIntakeForm() {
     e.preventDefault();
     
     // Check honeypot fields first (silent fail for bots)
-    if (honeypot || honeypot2 || middleName) {
+    if (honeypot || honeypot2) {
       console.log("Bot detected - form submission blocked");
       return;
     }
@@ -632,34 +630,6 @@ export function ClientIntakeForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <input
-  type="text"
-  name="honeypot"
-  value={honeypot}
-  onChange={(e) => setHoneypot(e.target.value)}
-  style={{ display: 'none' }}
-  tabIndex={-1}
-  autoComplete="off"
-/>
-<input
-  type="text"
-  name="honeypot2"
-  value={honeypot2}
-  onChange={(e) => setHoneypot2(e.target.value)}
-  style={{ display: 'none' }}
-  tabIndex={-1}
-  autoComplete="off"
-/>
-          <input
-  type="text"
-  name="middle_name"
-  value={middleName}
-  onChange={(e) => setMiddleName(e.target.value)}
-  style={{ display: 'none' }}
-  tabIndex={-1}
-  autoComplete="off"
-/>
-
           {/* Project Details */}
           <div className="bg-white border border-gray-200 rounded-sm p-6">
             <h2 className="text-xl font-normal text-black mb-4">
