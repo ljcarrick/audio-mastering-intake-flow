@@ -38,6 +38,7 @@ interface Contact {
 interface BillingInfo {
   name: string;
   email: string;
+  company: string;
 }
 
 export function ClientIntakeForm() {
@@ -54,7 +55,7 @@ export function ClientIntakeForm() {
   const [contacts, setContacts] = useState<Contact[]>([
     { id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }
   ]);
-  const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "" });
+  const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "", company: "" });
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
@@ -141,7 +142,8 @@ export function ClientIntakeForm() {
           // Copy contact data to billing info
           setBillingInfo({
             name: updatedContact.name,
-            email: updatedContact.email
+            email: updatedContact.email,
+            company: ""
           });
           
           return updatedContact;
@@ -518,6 +520,10 @@ export function ClientIntakeForm() {
                      <div class="field-label">Billing Email</div>
                      <div class="field-value">${billingInfo.email ? `<a href="mailto:${billingInfo.email}" style="color: #2563eb;">${billingInfo.email}</a>` : 'Not provided'}</div>
                  </div>
+                 <div class="field">
+                     <div class="field-label">Company</div>
+                     <div class="field-value">${billingInfo.company || 'Not provided'}</div>
+                 </div>
              </div>
          </div>
 
@@ -549,7 +555,7 @@ export function ClientIntakeForm() {
         contacts_info: contacts.filter(c => c.name || c.email).map(c => 
           `${c.name || 'No Name'} - ${c.email || 'No Email'} - ${c.phone || 'No Phone'} - ${c.role || 'No Role'}${c.billTo ? ' (Bill To)' : ''}`
         ).join('\n'),
-        billing_info: billingInfo.name || billingInfo.email ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'}` : 'No billing information provided',
+        billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
         is_rush: isRush ? 'YES - Rush' : 'Standard Priority',
         master_formats: masterFormats.join(', '),
@@ -595,7 +601,7 @@ export function ClientIntakeForm() {
       setDeadline("");
       setIsRush(false);
       setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
-      setBillingInfo({ name: "", email: "" });
+      setBillingInfo({ name: "", email: "", company: "" });
       setMasterFormats([]);
       setProjectNotes("");
       setHoneypot("");
@@ -1122,11 +1128,23 @@ export function ClientIntakeForm() {
                   />
                   {errors.billingEmail && <p className="text-sm text-red-600">{errors.billingEmail}</p>}
                 </div>
-              </div>
-              
-              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-sm">
-                <strong>Tip:</strong> Check "Bill To" next to a contact above to auto-fill billing information, or enter manually.
-              </div>
+               </div>
+
+               <div className="space-y-2">
+                 <Label htmlFor="billing-company" className="text-sm font-medium text-black">Company</Label>
+                 <Input
+                   id="billing-company"
+                   type="text"
+                   value={billingInfo.company}
+                   onChange={(e) => updateBillingInfo('company', e.target.value)}
+                   placeholder="Company name (optional)"
+                   className="bg-white border-gray-300 rounded-sm"
+                 />
+               </div>
+               
+               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-sm">
+                 <strong>Tip:</strong> Check "Bill To" next to a contact above to auto-fill billing information, or enter manually.
+               </div>
             </div>
           </div>
 
