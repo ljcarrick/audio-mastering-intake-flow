@@ -349,7 +349,7 @@ export function ClientIntakeForm() {
     e.preventDefault();
     
     // Check honeypot fields first (silent fail for bots)
-    if (honeypot || honeypot2) {
+    if (honeypot || honeypot2 || middleName) {
       console.log("Bot detected - form submission blocked");
       return;
     }
@@ -644,6 +644,15 @@ export function ClientIntakeForm() {
   name="honeypot2"
   value={honeypot2}
   onChange={(e) => setHoneypot2(e.target.value)}
+  style={{ display: 'none' }}
+  tabIndex={-1}
+  autoComplete="off"
+/>
+          <input
+  type="text"
+  name="middle_name"
+  value={middleName}
+  onChange={(e) => setMiddleName(e.target.value)}
   style={{ display: 'none' }}
   tabIndex={-1}
   autoComplete="off"
