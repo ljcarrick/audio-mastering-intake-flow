@@ -630,6 +630,25 @@ export function ClientIntakeForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <input
+  type="text"
+  name="honeypot"
+  value={honeypot}
+  onChange={(e) => setHoneypot(e.target.value)}
+  style={{ display: 'none' }}
+  tabIndex={-1}
+  autoComplete="off"
+/>
+<input
+  type="text"
+  name="honeypot2"
+  value={honeypot2}
+  onChange={(e) => setHoneypot2(e.target.value)}
+  style={{ display: 'none' }}
+  tabIndex={-1}
+  autoComplete="off"
+/>
+
           {/* Project Details */}
           <div className="bg-white border border-gray-200 rounded-sm p-6">
             <h2 className="text-xl font-normal text-black mb-4">
