@@ -662,75 +662,58 @@ const { toast } = useToast();
     }
   };
 
-return (
-  <>
-    <div style={{ background: 'red', color: 'white', padding: '10px' }}>
-      DEBUG: This is the NEW ClientIntakeForm
-    </div>
-
-    <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
-            LC - Mastering Request
-          </h1>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Project Details */}
-          <div className="bg-white border border-gray-200 rounded-sm p-6">
-            <h2 className="text-xl font-normal text-black mb-4">
-              Project Details
-            </h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="project-type" className="text-sm font-medium text-black">
-                    Project Type *
-                  </Label>
-                  <Select
-                    value={projectType}
-                    onValueChange={(value) => setProjectType(value as ProjectType)}
-                  >
-                    <SelectTrigger
-                      className={`bg-white border-gray-300 rounded-sm ${
-                        errors.projectType ? 'border-red-500' : ''
-                      }`}
-                    >
-                      <SelectValue placeholder="Select project type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="ep">EP</SelectItem>
-                      <SelectItem value="album">Album</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.projectType && (
-                    <p className="text-sm text-red-600">{errors.projectType}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
+  return (
+    <>
+      <div style={{ background: 'red', color: 'white', padding: '10px' }}>
+        DEBUG: This is the NEW ClientIntakeForm
       </div>
-    </div>
-  </>
-);
 
-                <div className="space-y-1">
-                  <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
-                  <Input
-                    id="num-tracks"
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={numTracks}
-                    onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
-                    className="bg-white border-gray-300 rounded-sm"
-                  />
-                </div>
-              </div>
+      <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
+              LC - Mastering Request
+            </h1>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Project Details */}
+            <div className="bg-white border border-gray-200 rounded-sm p-6">
+              <h2 className="text-xl font-normal text-black mb-4">
+                Project Details
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="project-type" className="text-sm font-medium text-black">
+                      Project Type *
+                    </Label>
+                    <Select
+                      value={projectType}
+                      onValueChange={(value) => setProjectType(value as ProjectType)}
+                    >
+                      <SelectTrigger
+                        className={`bg-white border-gray-300 rounded-sm ${
+                          errors.projectType ? 'border-red-500' : ''
+                        }`}
+                      >
+                        <SelectValue placeholder="Select project type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="ep">EP</SelectItem>
+                        <SelectItem value="album">Album</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.projectType && (
+                      <p className="text-sm text-red-600">{errors.projectType}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="num-tracks" className="text-sm font-medium text-black">
+                      Number of Tracks
+                    </Label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
