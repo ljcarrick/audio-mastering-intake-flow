@@ -474,7 +474,7 @@ export function ClientIntakeForm() {
                 ${tracks.map((track, i) => `
                 <div class="track-item">
                     <span class="track-number">${i + 1}.</span> ${track.title}
-                    ${hasISRCs && track.isrc ? `<br><small style="color: #6b7280;">ISRC: ${track.isrc}</small>` : ''}
+                    ${hasISRCs && track.isrc ? `<br><small style="color: #6b7280;">ISRC: ${formatISRCDisplay(track.isrc)}</small>` : ''}
                 </div>`).join('')}
             </div>
         </div>
@@ -740,7 +740,9 @@ export function ClientIntakeForm() {
                       ISRCs to embed?
                     </Label>
                     <p className="text-xs text-gray-600">
-                      International Standard Recording Codes for digital distribution
+                      Format: 2 chars (territory) - 3 chars (ID) - 2 digits (year) - 5 digits (release)
+                      <br />
+                      Paste-friendly: Enter with or without dashes, full codes can be pasted at once
                     </p>
                   </div>
                 </div>
@@ -791,28 +793,81 @@ export function ClientIntakeForm() {
                              <div className="space-y-2">
                                <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">
                                  ISRC Code
-                                 <span className="text-xs text-gray-500 ml-2">(Territory-ID-Year-Release)</span>
                                </Label>
                                <div className="flex items-center space-x-1">
                                  <Input
-                                   id={`isrc-${index}`}
-                                   value={formatISRCDisplay(track.isrc || "")}
-                                   onChange={(e) => updateTrack(index, "isrc", e.target.value)}
+                                   id={`isrc-territory-${index}`}
+                                   value={track.isrc?.slice(0, 2) || ""}
+                                   onChange={(e) => {
+                                     const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+                                     const currentIsrc = track.isrc || "";
+                                     const newIsrc = value + currentIsrc.slice(2);
+                                     updateTrack(index, "isrc", newIsrc);
+                                   }}
                                    onPaste={(e) => {
                                      e.preventDefault();
                                      const pastedText = e.clipboardData.getData('text');
                                      handleISRCPaste(index, pastedText);
                                    }}
-                                   placeholder="US-ABC-12-34567"
-                                   maxLength={14}
-                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider"
+                                   placeholder="US"
+                                   maxLength={2}
+                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider w-16 text-center"
+                                 />
+                                 <span className="text-gray-400">-</span>
+                                 <Input
+                                   value={track.isrc?.slice(2, 5) || ""}
+                                   onChange={(e) => {
+                                     const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+                                     const currentIsrc = track.isrc || "";
+                                     const newIsrc = currentIsrc.slice(0, 2) + value + currentIsrc.slice(5);
+                                     updateTrack(index, "isrc", newIsrc);
+                                   }}
+                                   onPaste={(e) => {
+                                     e.preventDefault();
+                                     const pastedText = e.clipboardData.getData('text');
+                                     handleISRCPaste(index, pastedText);
+                                   }}
+                                   placeholder="ABC"
+                                   maxLength={3}
+                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider w-20 text-center"
+                                 />
+                                 <span className="text-gray-400">-</span>
+                                 <Input
+                                   value={track.isrc?.slice(5, 7) || ""}
+                                   onChange={(e) => {
+                                     const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+                                     const currentIsrc = track.isrc || "";
+                                     const newIsrc = currentIsrc.slice(0, 5) + value + currentIsrc.slice(7);
+                                     updateTrack(index, "isrc", newIsrc);
+                                   }}
+                                   onPaste={(e) => {
+                                     e.preventDefault();
+                                     const pastedText = e.clipboardData.getData('text');
+                                     handleISRCPaste(index, pastedText);
+                                   }}
+                                   placeholder="25"
+                                   maxLength={2}
+                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider w-16 text-center"
+                                 />
+                                 <span className="text-gray-400">-</span>
+                                 <Input
+                                   value={track.isrc?.slice(7, 12) || ""}
+                                   onChange={(e) => {
+                                     const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 5);
+                                     const currentIsrc = track.isrc || "";
+                                     const newIsrc = currentIsrc.slice(0, 7) + value;
+                                     updateTrack(index, "isrc", newIsrc);
+                                   }}
+                                   onPaste={(e) => {
+                                     e.preventDefault();
+                                     const pastedText = e.clipboardData.getData('text');
+                                     handleISRCPaste(index, pastedText);
+                                   }}
+                                   placeholder="00001"
+                                   maxLength={5}
+                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider w-24 text-center"
                                  />
                                </div>
-                               <p className="text-xs text-gray-500">
-                                 <span className="font-medium">Format:</span> 2 chars (territory) - 3 chars (ID) - 2 digits (year) - 5 digits (release)
-                                 <br />
-                                 <span className="font-medium">Paste-friendly:</span> Enter with or without dashes, full codes can be pasted at once
-                               </p>
                              </div>
                            )}
                         </div>
