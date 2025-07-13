@@ -59,6 +59,7 @@ export function ClientIntakeForm() {
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
+  const [honeypot3, setHoneypot3] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -93,19 +94,36 @@ export function ClientIntakeForm() {
     
     // Special handling for ISRC field
     if (field === 'isrc') {
-      // Allow input up to 15 characters (including dashes), then clean to 12
-      if (value.length <= 15) {
-        // Remove all dashes and non-alphanumeric characters, keep only letters and numbers
-        const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-        // Limit to exactly 12 characters
-        const limitedValue = cleanValue.slice(0, 12);
-        updatedTracks[index] = { ...updatedTracks[index], [field]: limitedValue };
-      }
+      // Remove all dashes and non-alphanumeric characters, keep only letters and numbers
+      const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      // Limit to exactly 12 characters
+      const limitedValue = cleanValue.slice(0, 12);
+      updatedTracks[index] = { ...updatedTracks[index], [field]: limitedValue };
     } else {
       updatedTracks[index] = { ...updatedTracks[index], [field]: value };
     }
     
     setTracks(updatedTracks);
+  };
+
+  // Format ISRC for display with dashes (XX-XXX-XX-XXXXX)
+  const formatISRCDisplay = (isrc: string) => {
+    if (!isrc) return "";
+    const clean = isrc.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (clean.length >= 2) {
+      let formatted = clean.slice(0, 2);
+      if (clean.length > 2) formatted += '-' + clean.slice(2, 5);
+      if (clean.length > 5) formatted += '-' + clean.slice(5, 7);
+      if (clean.length > 7) formatted += '-' + clean.slice(7, 12);
+      return formatted;
+    }
+    return clean;
+  };
+
+  // Handle paste across ISRC chunks
+  const handleISRCPaste = (index: number, pastedText: string) => {
+    const cleanValue = pastedText.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+    updateTrack(index, 'isrc', cleanValue);
   };
 
   const addContact = () => {
@@ -316,7 +334,7 @@ export function ClientIntakeForm() {
     }
 
     // Check if honeypot fields are filled (indicates bot)
-    if (honeypot || honeypot2) {
+    if (honeypot || honeypot2 || honeypot3) {
       newErrors.bot = "Bot detected";
     }
 
@@ -341,7 +359,8 @@ export function ClientIntakeForm() {
       masterFormats.length > 0 &&
       mixFiles.some(file => file.url.trim()) &&
       !honeypot &&
-      !honeypot2
+      !honeypot2 &&
+      !honeypot3
     );
   };
 
@@ -349,7 +368,7 @@ export function ClientIntakeForm() {
     e.preventDefault();
     
     // Check honeypot fields first (silent fail for bots)
-    if (honeypot || honeypot2) {
+    if (honeypot || honeypot2 || honeypot3) {
       console.log("Bot detected - form submission blocked");
       return;
     }
@@ -438,15 +457,15 @@ export function ClientIntakeForm() {
                     <div class="field-label">Preferred Deadline</div>
                     <div class="field-value">${new Date(deadline).toLocaleDateString()}</div>
                 </div>
-                <div class="field">
-                    <div class="field-label">Priority</div>
-                    <div class="field-value">${isRush ? '<span class="rush-badge">Rush Order</span>' : 'Standard'}</div>
-                </div>
-            </div>` : isRush ? `
-            <div class="field">
-                <div class="field-label">Priority</div>
-                <div class="field-value"><span class="rush-badge">Rush Order</span></div>
-            </div>` : ''}
+                 ${isRush ? `<div class="field">
+                     <div class="field-label">Priority</div>
+                     <div class="field-value"><span class="rush-badge">Rush Order</span></div>
+                 </div>` : ''}
+             </div>` : isRush ? `
+             <div class="field">
+                 <div class="field-label">Priority</div>
+                 <div class="field-value"><span class="rush-badge">Rush Order</span></div>
+             </div>` : ''}
         </div>
 
         <div class="section">
@@ -606,6 +625,7 @@ export function ClientIntakeForm() {
       setProjectNotes("");
       setHoneypot("");
       setHoneypot2("");
+      setHoneypot3("");
       setErrors({});
 
     } catch (error) {
@@ -767,22 +787,34 @@ export function ClientIntakeForm() {
                             />
                           </div>
                           
-                          {hasISRCs && (
-                            <div className="space-y-1">
-                              <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">ISRC Code</Label>
-                               <Input
-                                 id={`isrc-${index}`}
-                                 value={track.isrc || ""}
-                                 onChange={(e) => updateTrack(index, "isrc", e.target.value)}
-                                 placeholder="USAB-12-34567 (dashes auto-removed)"
-                                 maxLength={15}
-                                 className="bg-white border-gray-300 rounded-sm font-mono"
-                               />
-                               <p className="text-xs text-gray-500 mt-1">
-                                 Enter 12 characters with or without dashes (e.g., USAB-12-34567). Final code will be 12 characters.
+                           {hasISRCs && (
+                             <div className="space-y-2">
+                               <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">
+                                 ISRC Code
+                                 <span className="text-xs text-gray-500 ml-2">(Territory-ID-Year-Release)</span>
+                               </Label>
+                               <div className="flex items-center space-x-1">
+                                 <Input
+                                   id={`isrc-${index}`}
+                                   value={formatISRCDisplay(track.isrc || "")}
+                                   onChange={(e) => updateTrack(index, "isrc", e.target.value)}
+                                   onPaste={(e) => {
+                                     e.preventDefault();
+                                     const pastedText = e.clipboardData.getData('text');
+                                     handleISRCPaste(index, pastedText);
+                                   }}
+                                   placeholder="US-ABC-12-34567"
+                                   maxLength={14}
+                                   className="bg-white border-gray-300 rounded-sm font-mono tracking-wider"
+                                 />
+                               </div>
+                               <p className="text-xs text-gray-500">
+                                 <span className="font-medium">Format:</span> 2 chars (territory) - 3 chars (ID) - 2 digits (year) - 5 digits (release)
+                                 <br />
+                                 <span className="font-medium">Paste-friendly:</span> Enter with or without dashes, full codes can be pasted at once
                                </p>
-                            </div>
-                          )}
+                             </div>
+                           )}
                         </div>
                       </div>
                     ))}
@@ -1167,6 +1199,16 @@ export function ClientIntakeForm() {
               name="company"
               value={honeypot2}
               onChange={(e) => setHoneypot2(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            <label htmlFor="middlename">Middle Name *</label>
+            <input
+              type="text"
+              id="middlename"
+              name="middlename"
+              value={honeypot3}
+              onChange={(e) => setHoneypot3(e.target.value)}
               tabIndex={-1}
               autoComplete="off"
             />
