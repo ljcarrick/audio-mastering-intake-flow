@@ -61,49 +61,7 @@ export function ClientIntakeForm() {
   const [honeypot2, setHoneypot2] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  type ISRCChunk = [string, string, string, string];
-  const [isrcChunks, setIsrcChunks] = useState<ISRCChunk[]>([]);
-
-  useEffect(() => {
-    setIsrcChunks(Array.from({ length: numTracks }, () => ["", "", "", ""]));
-  }, [numTracks]);
-
-  const handleISRCInput = (trackIdx: number, chunkIdx: number, input: string) => {
-    const cleaned = input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    const updated = [...isrcChunks];
-
-    if (cleaned.length === 12) {
-      updated[trackIdx] = [
-        cleaned.slice(0, 2),
-        cleaned.slice(2, 5),
-        cleaned.slice(5, 7),
-        cleaned.slice(7, 12),
-      ];
-    } else {
-      updated[trackIdx][chunkIdx] = cleaned;
-    }
-
-    setIsrcChunks(updated);
-  };
-
-  const autoFillISRCs = () => {
-    const [cc, reg, yr, baseNumStr] = isrcChunks[0];
-    if ([cc, reg, yr, baseNumStr].some(part => part === '')) {
-      alert("Please complete the first ISRC to auto-fill.");
-      return;
-    }
-
-    const baseNum = parseInt(baseNumStr, 10);
-    const filled = Array.from({ length: numTracks }, (_, i) => {
-      const newNum = (baseNum + i).toString().padStart(5, '0');
-      return [cc, reg, yr, newNum] as ISRCChunk;
-    });
-
-    setIsrcChunks(filled);
-  };
-
-const { toast } = useToast();
+  const { toast } = useToast();
 
   // Auto-fill track count based on project type
   useEffect(() => {
@@ -663,57 +621,50 @@ const { toast } = useToast();
   };
 
   return (
-    <>
-      <div style={{ background: 'red', color: 'white', padding: '10px' }}>
-        DEBUG: This is the NEW ClientIntakeForm
-      </div>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
+            LC - Mastering Request
+          </h1>
+        </div>
 
-      <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-light text-gray-900 mb-3 tracking-wide">
-              LC - Mastering Request
-            </h1>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Project Details */}
+          <div className="bg-white border border-gray-200 rounded-sm p-6">
+            <h2 className="text-xl font-normal text-black mb-4">
+              Project Details
+            </h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
+                  <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
+                    <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.projectType ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Select project type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="ep">EP</SelectItem>
+                      <SelectItem value="album">Album</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Project Details */}
-            <div className="bg-white border border-gray-200 rounded-sm p-6">
-              <h2 className="text-xl font-normal text-black mb-4">
-                Project Details
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="project-type" className="text-sm font-medium text-black">
-                      Project Type *
-                    </Label>
-                    <Select
-                      value={projectType}
-                      onValueChange={(value) => setProjectType(value as ProjectType)}
-                    >
-                      <SelectTrigger
-                        className={`bg-white border-gray-300 rounded-sm ${
-                          errors.projectType ? 'border-red-500' : ''
-                        }`}
-                      >
-                        <SelectValue placeholder="Select project type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="single">Single</SelectItem>
-                        <SelectItem value="ep">EP</SelectItem>
-                        <SelectItem value="album">Album</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.projectType && (
-                      <p className="text-sm text-red-600">{errors.projectType}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label htmlFor="num-tracks" className="text-sm font-medium text-black">
-                      Number of Tracks
-                    </Label>
+                <div className="space-y-1">
+                  <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
+                  <Input
+                    id="num-tracks"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={numTracks}
+                    onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
+                    className="bg-white border-gray-300 rounded-sm"
+                  />
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -1221,23 +1172,32 @@ const { toast } = useToast();
             />
           </div>
 
-                        </div>
-
-              <div className="text-right mt-6">
-                <Button
-                  type="submit"
-                  className="bg-black text-white hover:bg-gray-800"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Request"}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </div>
+          <div className="flex justify-center">
+            <Button 
+              type="submit" 
+              size="lg" 
+              disabled={!isFormValid() || isSubmitting}
+              className={`px-8 py-3 rounded-sm font-medium transition-all duration-200 ${
+                !isFormValid() || isSubmitting
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' 
+                  : 'bg-black hover:bg-gray-800 text-white'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-gray-500 border-t-transparent"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Submit Project Request
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
-};
-
-export default ClientIntakeForm;
+}
