@@ -685,9 +685,18 @@ return (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
-                  <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
-                    <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.projectType ? 'border-red-500' : ''}`}>
+                  <Label htmlFor="project-type" className="text-sm font-medium text-black">
+                    Project Type *
+                  </Label>
+                  <Select
+                    value={projectType}
+                    onValueChange={(value) => setProjectType(value as ProjectType)}
+                  >
+                    <SelectTrigger
+                      className={`bg-white border-gray-300 rounded-sm ${
+                        errors.projectType ? 'border-red-500' : ''
+                      }`}
+                    >
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -696,20 +705,9 @@ return (
                       <SelectItem value="album">Album</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
-                  <Input
-                    id="num-tracks"
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={numTracks}
-                    onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
-                    className="bg-white border-gray-300 rounded-sm"
-                  />
+                  {errors.projectType && (
+                    <p className="text-sm text-red-600">{errors.projectType}</p>
+                  )}
                 </div>
               </div>
             </div>
