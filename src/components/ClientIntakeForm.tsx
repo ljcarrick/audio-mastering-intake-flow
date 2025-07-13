@@ -698,6 +698,19 @@ return (
                   </Select>
                   {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
                 </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
+                  <Input
+                    id="num-tracks"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={numTracks}
+                    onChange={(e) => setNumTracks(parseInt(e.target.value) || 1)}
+                    className="bg-white border-gray-300 rounded-sm"
+                  />
+                </div>
               </div>
             </div>
           </div>
