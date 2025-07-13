@@ -1221,32 +1221,23 @@ const { toast } = useToast();
             />
           </div>
 
-          <div className="flex justify-center">
-            <Button 
-              type="submit" 
-              size="lg" 
-              disabled={!isFormValid() || isSubmitting}
-              className={`px-8 py-3 rounded-sm font-medium transition-all duration-200 ${
-                !isFormValid() || isSubmitting
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' 
-                  : 'bg-black hover:bg-gray-800 text-white'
-              }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-gray-500 border-t-transparent"></div>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Submit Project Request
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+                        </div>
+
+              <div className="text-right mt-6">
+                <Button
+                  type="submit"
+                  className="bg-black text-white hover:bg-gray-800"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
-}
+};
+
+export default ClientIntakeForm;
