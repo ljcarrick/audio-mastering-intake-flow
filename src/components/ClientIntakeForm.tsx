@@ -663,6 +663,10 @@ const { toast } = useToast();
   };
 
   return (
+    <div style={{ background: 'red', color: 'white', padding: '10px' }}>
+  DEBUG: This is the NEW ClientIntakeForm
+</div>
+
     <div className="min-h-screen bg-gray-100 py-12 px-4 font-sans">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
