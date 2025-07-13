@@ -698,6 +698,14 @@ return (
                   </Select>
                   {errors.projectType && <p className="text-sm text-red-600">{errors.projectType}</p>}
                 </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </>
+);
 
                 <div className="space-y-1">
                   <Label htmlFor="num-tracks" className="text-sm font-medium text-black">Number of Tracks</Label>
