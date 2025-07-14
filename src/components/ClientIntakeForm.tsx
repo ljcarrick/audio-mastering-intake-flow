@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink, Cloud, Check } from "lucide-react";
+import { Calendar, Clock, Music, User, Mail, Phone, Upload, AlertCircle, Plus, X, ExternalLink, Cloud, Check, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import emailjs from '@emailjs/browser';
 
@@ -57,6 +57,7 @@ export function ClientIntakeForm() {
   ]);
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({ name: "", email: "", company: "" });
   const [masterFormats, setMasterFormats] = useState<string[]>([]);
+  const [extraPasses, setExtraPasses] = useState<string[]>([]);
   const [honeypot, setHoneypot] = useState("");
   const [honeypot2, setHoneypot2] = useState("");
   const [honeypot3, setHoneypot3] = useState("");
@@ -220,6 +221,39 @@ export function ClientIntakeForm() {
         ? prev.filter(f => f !== format)
         : [...prev, format]
     );
+  };
+
+  const toggleExtraPass = (pass: string) => {
+    setExtraPasses(prev => 
+      prev.includes(pass) 
+        ? prev.filter(f => f !== pass)
+        : [...prev, pass]
+    );
+  };
+
+  const handleAutofillISRC = () => {
+    if (tracks.length <= 1 || !tracks[0].isrc) return;
+    
+    const firstISRC = tracks[0].isrc;
+    if (firstISRC.length < 12) return;
+    
+    const baseISRC = firstISRC.slice(0, 7); // First 7 characters (XX-XXX-XX)
+    const startNumber = parseInt(firstISRC.slice(7)); // Last 5 digits
+    
+    const updatedTracks = tracks.map((track, index) => {
+      if (index === 0) return track; // Keep first track unchanged
+      
+      const newNumber = (startNumber + index).toString().padStart(5, '0');
+      const newISRC = baseISRC + newNumber;
+      
+      return { ...track, isrc: newISRC };
+    });
+    
+    setTracks(updatedTracks);
+  };
+
+  const shouldShowAutofill = () => {
+    return hasISRCs && tracks.length > 1 && tracks[0].isrc && tracks[0].isrc.length === 12;
   };
 
   const validateFileLink = (url: string) => {
@@ -459,12 +493,12 @@ export function ClientIntakeForm() {
                 </div>
                  ${isRush ? `<div class="field">
                      <div class="field-label">Priority</div>
-                     <div class="field-value"><span class="rush-badge">Rush Order</span></div>
+                     <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
                  </div>` : ''}
              </div>` : isRush ? `
              <div class="field">
                  <div class="field-label">Priority</div>
-                 <div class="field-value"><span class="rush-badge">Rush Order</span></div>
+                 <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
              </div>` : ''}
         </div>
 
@@ -496,11 +530,18 @@ export function ClientIntakeForm() {
             <div class="formats-list">
                 ${masterFormats.map(format => `<span class="format-tag">${format}</span>`).join('')}
             </div>
+            ${extraPasses.length > 0 ? `
+            <div style="margin-top: 16px;">
+                <div style="font-size: 16px; font-weight: 500; color: #111827; margin-bottom: 8px;">Extra Passes</div>
+                <div class="formats-list">
+                    ${extraPasses.map(pass => `<span class="format-tag">${pass}</span>`).join('')}
+                </div>
+            </div>` : ''}
             ${hasISRCs ? '<p style="margin-top: 12px; font-size: 14px; color: #6b7280;">✓ Client has ISRC codes to embed</p>' : ''}
         </div>
 
          <div class="section">
-            <div class="section-title">📞 Contact Information</div>
+             <div class="section-title">📞 Contact Information (Queries, Master Deliveries)</div>
             ${contacts.filter(c => c.name || c.email).map(c => `
             <div style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 6px;">
                 <div class="field-group">
@@ -576,8 +617,9 @@ export function ClientIntakeForm() {
         ).join('\n'),
         billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        is_rush: isRush ? 'YES - Rush' : 'Standard Priority',
+        priority: isRush ? 'YES - Rush' : '',
         master_formats: masterFormats.join(', '),
+        extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
         file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}${f.description ? ` - ${f.description}` : ''}`).join('\n'),
         notes: projectNotes || 'None',
@@ -622,6 +664,7 @@ export function ClientIntakeForm() {
       setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
       setBillingInfo({ name: "", email: "", company: "" });
       setMasterFormats([]);
+      setExtraPasses([]);
       setProjectNotes("");
       setHoneypot("");
       setHoneypot2("");
@@ -657,8 +700,8 @@ export function ClientIntakeForm() {
             </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type *</Label>
+                 <div className="space-y-1">
+                   <Label htmlFor="project-type" className="text-sm font-medium text-black">Project Type <span className={`${!projectType ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   <Select value={projectType} onValueChange={(value) => setProjectType(value as ProjectType)}>
                     <SelectTrigger className={`bg-white border-gray-300 rounded-sm ${errors.projectType ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Select project type" />
@@ -687,8 +730,8 @@ export function ClientIntakeForm() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="artist" className="text-sm font-medium text-black">Artist *</Label>
+                 <div className="space-y-1">
+                   <Label htmlFor="artist" className="text-sm font-medium text-black">Artist <span className={`${!artist.trim() ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   <Input
                     id="artist"
                     type="text"
@@ -701,11 +744,11 @@ export function ClientIntakeForm() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="title" className="text-sm font-medium text-black">
-                    {projectType === "ep" ? "EP Title" : 
-                     projectType === "album" ? "Album Title" : 
-                     "Project Title"} {projectType !== "single" ? "*" : ""}
-                  </Label>
+                   <Label htmlFor="title" className="text-sm font-medium text-black">
+                     {projectType === "ep" ? "EP Title" : 
+                      projectType === "album" ? "Album Title" : 
+                      "Project Title"} {(projectType === "ep" || projectType === "album") ? <span className={`${(projectType === "ep" || projectType === "album") && !title.trim() ? 'text-red-500' : (projectType === "ep" || projectType === "album") ? 'text-green-500' : ''}`}>*</span> : ""}
+                   </Label>
                   <Input
                     id="title"
                     type="text"
@@ -740,9 +783,7 @@ export function ClientIntakeForm() {
                       ISRCs to embed?
                     </Label>
                     <p className="text-xs text-gray-600">
-                      Format: 2 chars (territory) - 3 chars (ID) - 2 digits (year) - 5 digits (release)
-                      <br />
-                      Paste-friendly: Enter with or without dashes, full codes can be pasted at once
+                      Format: XX (Country) - XXX (Registrant) - XX (Year) - XXXXX (Designation)
                     </p>
                   </div>
                 </div>
@@ -769,17 +810,17 @@ export function ClientIntakeForm() {
               {tracks.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-black">Track List / Order *</Label>
+                    <Label className="text-sm font-medium text-black">Track List / Order <span className={`${tracks.some(track => !track.title.trim()) ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                     {errors.tracks && <p className="text-sm text-red-600">{errors.tracks}</p>}
                   </div>
                   <div className="space-y-3">
                     {tracks.map((track, index) => (
                       <div key={track.id} className="p-3 bg-gray-50 border border-gray-200 rounded-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
-                              {index + 1}. Song Title *
-                            </Label>
+                           <div className="space-y-1">
+                             <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
+                               {index + 1}. Song Title <span className={`${!track.title.trim() ? 'text-red-500' : 'text-green-500'}`}>*</span>
+                             </Label>
                             <Input
                               id={`track-title-${index}`}
                               value={track.title}
@@ -791,10 +832,24 @@ export function ClientIntakeForm() {
                           
                            {hasISRCs && (
                              <div className="space-y-2">
-                               <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">
-                                 ISRC Code
-                               </Label>
+                                <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">
+                                  ISRC Code
+                                </Label>
                                 <div className="flex items-center space-x-1">
+                                  {shouldShowAutofill() && index === 0 && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleAutofillISRC}
+                                      className="mb-1 text-xs px-2 py-1 h-6"
+                                    >
+                                      <ChevronDown className="h-3 w-3 mr-1" />
+                                      Autofill
+                                    </Button>
+                                  )}
+                                </div>
+                                 <div className="flex items-center space-x-1">
                                   <Input
                                     id={`isrc-territory-${index}`}
                                     value={track.isrc?.slice(0, 2) || ""}
@@ -880,7 +935,7 @@ export function ClientIntakeForm() {
               {/* Mix Files */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link *</Label>
+                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link <span className={`${!mixFiles.some(file => file.url.trim()) ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -1030,7 +1085,7 @@ export function ClientIntakeForm() {
               {/* Master Formats */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-black">Required Master Formats *</Label>
+                  <Label className="text-sm font-medium text-black">Required Master Formats <span className={`${masterFormats.length === 0 ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   {errors.masterFormats && <p className="text-sm text-red-600">{errors.masterFormats}</p>}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1049,10 +1104,34 @@ export function ClientIntakeForm() {
                       </Label>
                     </div>
                   ))}
-                </div>
-              </div>
+                 </div>
+               </div>
 
-              <div className="space-y-2">
+               {/* Extra Passes */}
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                   <Label className="text-sm font-medium text-black">Extra Passes</Label>
+                 </div>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                   {["Instrumental Masters", "TV Masters"].map((pass) => (
+                     <div key={pass} className="flex items-center space-x-2">
+                       <Checkbox
+                         id={pass.toLowerCase().replace(" ", "-")}
+                         checked={extraPasses.includes(pass)}
+                         onCheckedChange={() => toggleExtraPass(pass)}
+                       />
+                       <Label 
+                         htmlFor={pass.toLowerCase().replace(" ", "-")}
+                         className="text-sm font-medium text-black"
+                       >
+                         {pass}
+                       </Label>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+
+               <div className="space-y-2">
                 <Label htmlFor="notes" className="text-sm font-medium text-black">Project Notes / Preferences (optional)</Label>
                 <Textarea
                   id="notes"
@@ -1069,7 +1148,7 @@ export function ClientIntakeForm() {
           <div className="bg-white border border-gray-200 rounded-sm p-6">
             <h2 className="text-xl font-normal text-black mb-4 flex items-center gap-3">
               <User className="h-5 w-5 text-black" />
-              Contact Information
+              Contact Information (Queries, Master Deliveries)
             </h2>
             
             <div className="space-y-3">
@@ -1085,8 +1164,8 @@ export function ClientIntakeForm() {
                   </colgroup>
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Name *</th>
-                      <th className="text-left py-2 px-2 text-sm font-medium text-black">Email *</th>
+                       <th className="text-left py-2 px-2 text-sm font-medium text-black">Name <span className={`${!contacts.some(c => c.name.trim()) ? 'text-red-500' : 'text-green-500'}`}>*</span></th>
+                       <th className="text-left py-2 px-2 text-sm font-medium text-black">Email <span className={`${!contacts.some(c => c.email.trim() && /\S+@\S+\.\S+/.test(c.email)) ? 'text-red-500' : 'text-green-500'}`}>*</span></th>
                       <th className="text-left py-2 px-2 text-sm font-medium text-black">Phone</th>
                       <th className="text-left py-2 px-2 text-sm font-medium text-black">Role</th>
                       <th className="text-left py-2 px-2 text-sm font-medium text-black">Bill To</th>
@@ -1191,7 +1270,7 @@ export function ClientIntakeForm() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="billing-name" className="text-sm font-medium text-black">Name *</Label>
+                  <Label htmlFor="billing-name" className="text-sm font-medium text-black">Name <span className={`${!billingInfo.name.trim() ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   <Input
                     id="billing-name"
                     type="text"
@@ -1204,7 +1283,7 @@ export function ClientIntakeForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="billing-email" className="text-sm font-medium text-black">Email *</Label>
+                  <Label htmlFor="billing-email" className="text-sm font-medium text-black">Email <span className={`${!billingInfo.email || !/\S+@\S+\.\S+/.test(billingInfo.email) ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   <Input
                     id="billing-email"
                     type="email"
