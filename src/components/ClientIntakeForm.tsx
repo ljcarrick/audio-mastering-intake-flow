@@ -63,6 +63,7 @@ export function ClientIntakeForm() {
   const [honeypot3, setHoneypot3] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
   // Auto-fill track count based on project type
@@ -184,7 +185,7 @@ export function ClientIntakeForm() {
     const newMixFile: MixFile = {
       id: `mix-${mixFiles.length + 1}`,
       url: "",
-      description: `Additional files ${mixFiles.length + 1}`
+      description: ""
     };
     setMixFiles([...mixFiles, newMixFile]);
   };
@@ -617,7 +618,7 @@ export function ClientIntakeForm() {
         ).join('\n'),
         billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        priority: isRush ? 'YES - Rush' : '',
+        priority: isRush ? 'RUSH ORDER' : '',
         master_formats: masterFormats.join(', '),
         extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
@@ -651,25 +652,8 @@ export function ClientIntakeForm() {
       console.log("Template Params:", templateParams);
       console.log("==============================");
 
-      // Reset form
-      setProjectType("");
-      setArtist("");
-      setTitle("");
-      setNumTracks(1);
-      setTracks([]);
-      setMixFiles([{ id: "mix-1", url: "", description: "" }]);
-      setHasISRCs(false);
-      setDeadline("");
-      setIsRush(false);
-      setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
-      setBillingInfo({ name: "", email: "", company: "" });
-      setMasterFormats([]);
-      setExtraPasses([]);
-      setProjectNotes("");
-      setHoneypot("");
-      setHoneypot2("");
-      setHoneypot3("");
-      setErrors({});
+      // Set submitted state instead of resetting form
+      setIsSubmitted(true);
 
     } catch (error) {
       console.error("Submission error:", error);
@@ -681,6 +665,29 @@ export function ClientIntakeForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleNewRequest = () => {
+    // Reset form for new request
+    setProjectType("");
+    setArtist("");
+    setTitle("");
+    setNumTracks(1);
+    setTracks([]);
+    setMixFiles([{ id: "mix-1", url: "", description: "" }]);
+    setHasISRCs(false);
+    setDeadline("");
+    setIsRush(false);
+    setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
+    setBillingInfo({ name: "", email: "", company: "" });
+    setMasterFormats([]);
+    setExtraPasses([]);
+    setProjectNotes("");
+    setHoneypot("");
+    setHoneypot2("");
+    setHoneypot3("");
+    setErrors({});
+    setIsSubmitted(false);
   };
 
   return (
@@ -851,9 +858,8 @@ export function ClientIntakeForm() {
                                          const pastedText = e.clipboardData.getData('text');
                                          handleISRCPaste(index, pastedText);
                                        }}
-                                       placeholder="US"
-                                       maxLength={2}
-                                       className="bg-white border-gray-300 rounded-sm w-16 text-center"
+                                        maxLength={2}
+                                        className="bg-white border-gray-300 rounded-sm w-16 text-center"
                                      />
                                      <span className="text-gray-400">-</span>
                                      <Input
@@ -869,9 +875,8 @@ export function ClientIntakeForm() {
                                          const pastedText = e.clipboardData.getData('text');
                                          handleISRCPaste(index, pastedText);
                                        }}
-                                       placeholder="ABC"
-                                       maxLength={3}
-                                       className="bg-white border-gray-300 rounded-sm w-20 text-center"
+                                        maxLength={3}
+                                        className="bg-white border-gray-300 rounded-sm w-20 text-center"
                                      />
                                      <span className="text-gray-400">-</span>
                                      <Input
@@ -887,9 +892,8 @@ export function ClientIntakeForm() {
                                          const pastedText = e.clipboardData.getData('text');
                                        handleISRCPaste(index, pastedText);
                                      }}
-                                     placeholder="25"
-                                     maxLength={2}
-                                     className="bg-white border-gray-300 rounded-sm w-16 text-center"
+                                      maxLength={2}
+                                      className="bg-white border-gray-300 rounded-sm w-16 text-center"
                                    />
                                    <span className="text-gray-400">-</span>
                                    <Input
@@ -905,9 +909,8 @@ export function ClientIntakeForm() {
                                        const pastedText = e.clipboardData.getData('text');
                                        handleISRCPaste(index, pastedText);
                                      }}
-                                     placeholder="00001"
-                                     maxLength={5}
-                                     className="bg-white border-gray-300 rounded-sm w-24 text-center"
+                                      maxLength={5}
+                                      className="bg-white border-gray-300 rounded-sm w-24 text-center"
                                    />
                                    </div>
                                    {shouldShowAutofill() && index === 0 && (
@@ -1348,7 +1351,7 @@ export function ClientIntakeForm() {
             />
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center space-x-4">
             <Button 
               type="submit" 
               size="lg" 
@@ -1371,6 +1374,17 @@ export function ClientIntakeForm() {
                 </>
               )}
             </Button>
+            {isSubmitted && (
+              <Button 
+                type="button" 
+                size="lg" 
+                onClick={handleNewRequest}
+                className="px-8 py-3 rounded-sm font-medium bg-white border border-gray-300 text-black hover:bg-gray-50"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Mastering Request
+              </Button>
+            )}
           </div>
         </form>
       </div>
