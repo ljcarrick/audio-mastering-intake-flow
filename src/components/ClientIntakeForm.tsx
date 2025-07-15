@@ -618,7 +618,7 @@ export function ClientIntakeForm() {
         ).join('\n'),
         billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        priority: isRush ? '<span style="color: #dc2626; font-weight: bold;">RUSH ORDER</span>' : '',
+        priority: isRush ? 'RUSH ORDER' : '',
         master_formats: masterFormats.join(', '),
         extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
