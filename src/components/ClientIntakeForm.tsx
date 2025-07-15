@@ -496,7 +496,7 @@ export function ClientIntakeForm() {
                      <div class="field-label">Priority</div>
                      <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
                  </div>` : ''}
-             </div>` : isRush ? `
+              </div>` : isRush ? `
              <div class="field">
                  <div class="field-label">Priority</div>
                  <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
@@ -618,7 +618,7 @@ export function ClientIntakeForm() {
         ).join('\n'),
         billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        priority: isRush ? 'RUSH ORDER' : '',
+        priority: isRush ? '<span style="color: #dc2626; font-weight: bold;">RUSH ORDER</span>' : '',
         master_formats: masterFormats.join(', '),
         extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
@@ -652,8 +652,25 @@ export function ClientIntakeForm() {
       console.log("Template Params:", templateParams);
       console.log("==============================");
 
-      // Set submitted state instead of resetting form
-      setIsSubmitted(true);
+      // Reset form for new request
+      setProjectType("");
+      setArtist("");
+      setTitle("");
+      setNumTracks(1);
+      setTracks([]);
+      setMixFiles([{ id: "mix-1", url: "", description: "" }]);
+      setHasISRCs(false);
+      setDeadline("");
+      setIsRush(false);
+      setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
+      setBillingInfo({ name: "", email: "", company: "" });
+      setMasterFormats([]);
+      setExtraPasses([]);
+      setProjectNotes("");
+      setHoneypot("");
+      setHoneypot2("");
+      setHoneypot3("");
+      setErrors({});
 
     } catch (error) {
       console.error("Submission error:", error);
@@ -847,12 +864,18 @@ export function ClientIntakeForm() {
                                      <Input
                                        id={`isrc-territory-${index}`}
                                        value={track.isrc?.slice(0, 2) || ""}
-                                       onChange={(e) => {
-                                         const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
-                                         const currentIsrc = track.isrc || "";
-                                         const newIsrc = value + currentIsrc.slice(2);
-                                         updateTrack(index, "isrc", newIsrc);
-                                       }}
+                                        onChange={(e) => {
+                                          const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+                                          const currentIsrc = track.isrc || "";
+                                          const newIsrc = value + currentIsrc.slice(2);
+                                          updateTrack(index, "isrc", newIsrc);
+                                          
+                                          // Auto-tab to next field when complete
+                                          if (value.length === 2) {
+                                            const nextInput = document.getElementById(`isrc-registrant-${index}`);
+                                            if (nextInput) nextInput.focus();
+                                          }
+                                        }}
                                        onPaste={(e) => {
                                          e.preventDefault();
                                          const pastedText = e.clipboardData.getData('text');
@@ -862,14 +885,21 @@ export function ClientIntakeForm() {
                                         className="bg-white border-gray-300 rounded-sm w-16 text-center"
                                      />
                                      <span className="text-gray-400">-</span>
-                                     <Input
-                                       value={track.isrc?.slice(2, 5) || ""}
-                                       onChange={(e) => {
-                                         const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
-                                         const currentIsrc = track.isrc || "";
-                                         const newIsrc = currentIsrc.slice(0, 2) + value + currentIsrc.slice(5);
-                                         updateTrack(index, "isrc", newIsrc);
-                                       }}
+                                      <Input
+                                        id={`isrc-registrant-${index}`}
+                                        value={track.isrc?.slice(2, 5) || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+                                          const currentIsrc = track.isrc || "";
+                                          const newIsrc = currentIsrc.slice(0, 2) + value + currentIsrc.slice(5);
+                                          updateTrack(index, "isrc", newIsrc);
+                                          
+                                          // Auto-tab to next field when complete
+                                          if (value.length === 3) {
+                                            const nextInput = document.getElementById(`isrc-year-${index}`);
+                                            if (nextInput) nextInput.focus();
+                                          }
+                                        }}
                                        onPaste={(e) => {
                                          e.preventDefault();
                                          const pastedText = e.clipboardData.getData('text');
@@ -879,14 +909,21 @@ export function ClientIntakeForm() {
                                         className="bg-white border-gray-300 rounded-sm w-20 text-center"
                                      />
                                      <span className="text-gray-400">-</span>
-                                     <Input
-                                       value={track.isrc?.slice(5, 7) || ""}
-                                       onChange={(e) => {
-                                         const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
-                                         const currentIsrc = track.isrc || "";
-                                         const newIsrc = currentIsrc.slice(0, 5) + value + currentIsrc.slice(7);
-                                         updateTrack(index, "isrc", newIsrc);
-                                       }}
+                                      <Input
+                                        id={`isrc-year-${index}`}
+                                        value={track.isrc?.slice(5, 7) || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+                                          const currentIsrc = track.isrc || "";
+                                          const newIsrc = currentIsrc.slice(0, 5) + value + currentIsrc.slice(7);
+                                          updateTrack(index, "isrc", newIsrc);
+                                          
+                                          // Auto-tab to next field when complete
+                                          if (value.length === 2) {
+                                            const nextInput = document.getElementById(`isrc-designation-${index}`);
+                                            if (nextInput) nextInput.focus();
+                                          }
+                                        }}
                                        onPaste={(e) => {
                                          e.preventDefault();
                                          const pastedText = e.clipboardData.getData('text');
@@ -896,14 +933,15 @@ export function ClientIntakeForm() {
                                       className="bg-white border-gray-300 rounded-sm w-16 text-center"
                                    />
                                    <span className="text-gray-400">-</span>
-                                   <Input
-                                     value={track.isrc?.slice(7, 12) || ""}
-                                     onChange={(e) => {
-                                       const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 5);
-                                       const currentIsrc = track.isrc || "";
-                                       const newIsrc = currentIsrc.slice(0, 7) + value;
-                                       updateTrack(index, "isrc", newIsrc);
-                                     }}
+                                    <Input
+                                      id={`isrc-designation-${index}`}
+                                      value={track.isrc?.slice(7, 12) || ""}
+                                      onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 5);
+                                        const currentIsrc = track.isrc || "";
+                                        const newIsrc = currentIsrc.slice(0, 7) + value;
+                                        updateTrack(index, "isrc", newIsrc);
+                                      }}
                                      onPaste={(e) => {
                                        e.preventDefault();
                                        const pastedText = e.clipboardData.getData('text');
@@ -1001,14 +1039,6 @@ export function ClientIntakeForm() {
                             </div>
                           )}
                           
-                          {mixFile.id !== "mix-1" && (
-                            <Input
-                              value={mixFile.description}
-                              onChange={(e) => updateMixFile(mixFile.id, "description", e.target.value)}
-                              placeholder="Description (optional)"
-                              className="bg-white border-gray-300 rounded-sm text-sm"
-                            />
-                          )}
                         </div>
                         {mixFiles.length > 1 && (
                           <Button
