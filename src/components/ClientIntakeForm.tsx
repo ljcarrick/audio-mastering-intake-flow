@@ -495,7 +495,10 @@ export function ClientIntakeForm() {
                  ${isRush ? `<div class="field">
                      <div class="field-label">Priority</div>
                      <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
-                 </div>` : ''}
+                 </div>` : `<div class="field">
+                     <div class="field-label">Priority</div>
+                     <div class="field-value">${'Standard Priority'}</div>
+                 </div>`}
               </div>` : isRush ? `
              <div class="field">
                  <div class="field-label">Priority</div>
@@ -619,6 +622,7 @@ export function ClientIntakeForm() {
         billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
         deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
         priority: isRush ? 'RUSH ORDER' : '',
+        standard: isRush ? '' : 'Standard Priority',
         master_formats: masterFormats.join(', '),
         extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
         tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
@@ -845,7 +849,7 @@ export function ClientIntakeForm() {
                              <Label htmlFor={`track-title-${index}`} className="text-sm font-medium text-black">
                                {index + 1}. Song Title <span className={`${!track.title.trim() ? 'text-red-500' : 'text-green-500'}`}>*</span>
                              </Label>
-                            <Input
+                             <Input
                               id={`track-title-${index}`}
                               value={track.title}
                               onChange={(e) => updateTrack(index, "title", e.target.value)}
