@@ -715,9 +715,11 @@ export function ClientIntakeForm() {
     <div className="min-h-screen bg-background py-12 px-4 font-sans">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-avant-garde font-black text-gray-900 mb-3 tracking-wider">
-            LC - Mastering Request
-          </h1>
+          <img 
+            src="/lovable-uploads/06b3d34d-9c75-4c3e-8de4-8b0870d983bd.png" 
+            alt="LC - Mastering Request" 
+            className="mx-auto mb-3 h-12"
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
