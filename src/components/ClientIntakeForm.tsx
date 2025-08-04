@@ -715,7 +715,7 @@ export function ClientIntakeForm() {
     <div className="min-h-screen bg-background py-12 px-4 font-sans">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-montserrat font-bold text-gray-900 mb-3 tracking-wide">
+          <h1 className="text-3xl font-avant-garde font-black text-gray-900 mb-3 tracking-wider">
             LC - Mastering Request
           </h1>
         </div>
