@@ -1,7 +1,13 @@
 import { ClientIntakeForm } from "@/components/ClientIntakeForm";
+import { AuthNav } from "@/components/AuthNav";
 
 const Index = () => {
-  return <ClientIntakeForm />;
+  return (
+    <>
+      <AuthNav />
+      <ClientIntakeForm />
+    </>
+  );
 };
 
 export default Index;
