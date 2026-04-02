@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +67,8 @@ export function ClientIntakeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const lastSubmissionRef = useRef<number>(0);
 
   // Auto-fill track count based on project type
   useEffect(() => {
@@ -283,34 +287,28 @@ export function ClientIntakeForm() {
 
     try {
       if (url.includes("dropbox.com")) {
-        let folderName = "Dropbox";
-        
-        if (url.includes("6pwxohhre8umzo12vzucx")) {
-          folderName = "Crowd Scene PREMASTER FILES";
-        }
-        
-        setMixFiles(files => files.map(file => 
-          file.id === fileId ? { ...file, title: folderName, isLoading: false } : file
+        setMixFiles(files => files.map(file =>
+          file.id === fileId ? { ...file, title: "Dropbox", isLoading: false } : file
         ));
         return;
       }
-      
+
       if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
-        setMixFiles(files => files.map(file => 
+        setMixFiles(files => files.map(file =>
           file.id === fileId ? { ...file, title: "Google Drive", isLoading: false } : file
         ));
         return;
       }
 
       if (url.includes("wetransfer.com") || url.includes("we.tl")) {
-        setMixFiles(files => files.map(file => 
+        setMixFiles(files => files.map(file =>
           file.id === fileId ? { ...file, title: "WeTransfer", isLoading: false } : file
         ));
         return;
       }
 
-    } catch (error) {
-      console.error("Error fetching title:", error);
+    } catch {
+      // title fetch is best-effort — silently ignore
     }
 
     setMixFiles(files => files.map(file => 
@@ -399,297 +397,15 @@ export function ClientIntakeForm() {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check honeypot fields first (silent fail for bots)
-    if (honeypot || honeypot2 || honeypot3) {
-      console.log("Bot detected - form submission blocked");
-      return;
-    }
-    
-    if (!validateForm()) {
-      toast({
-        title: "Please fix the errors below",
-        description: "All required fields must be completed.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const escapeHtml = (str: string): string =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
 
-    setIsSubmitting(true);
-
-    try {
-      // Create rich HTML email content
-      const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; color: #111827; background-color: #f5f5f5; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .header { background: #111827; color: white; padding: 30px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 1px; }
-        .section { padding: 25px; border-bottom: 1px solid #e5e7eb; }
-        .section:last-child { border-bottom: none; }
-        .section-title { font-size: 18px; font-weight: 500; color: #111827; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .field { }
-        .field-label { font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .field-value { font-size: 14px; color: #111827; font-weight: 400; }
-        .track-list { margin-top: 10px; }
-        .track-item { background: #f9fafb; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #111827; }
-        .track-number { font-weight: 600; color: #111827; }
-        .formats-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-        .format-tag { background: #111827; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-        .file-link { color: #2563eb; text-decoration: none; word-break: break-all; }
-        .file-link:hover { text-decoration: underline; }
-        .rush-badge { background: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-        .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
-        @media (max-width: 600px) {
-            .field-group { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>LC - Mastering Request</h1>
-            <p style="margin: 8px 0 0 0; opacity: 0.8;">${new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            })}</p>
-        </div>
-        
-        <div class="section">
-            <div class="section-title">🎵 Project Details</div>
-            <div class="field-group">
-                <div class="field">
-                    <div class="field-label">Artist</div>
-                    <div class="field-value">${artist}</div>
-                </div>
-                ${title ? `
-                <div class="field">
-                    <div class="field-label">${projectType === "ep" ? "EP" : projectType === "album" ? "Album" : "Project"} Title</div>
-                    <div class="field-value">${title}</div>
-                </div>` : ''}
-            </div>
-            <div class="field-group">
-                <div class="field">
-                    <div class="field-label">Project Type</div>
-                    <div class="field-value">${projectType.toUpperCase()}</div>
-                </div>
-                <div class="field">
-                    <div class="field-label">Number of Tracks</div>
-                    <div class="field-value">${numTracks}</div>
-                </div>
-            </div>
-            ${deadline ? `
-            <div class="field-group">
-                <div class="field">
-                    <div class="field-label">Preferred Deadline</div>
-                    <div class="field-value">${new Date(deadline).toLocaleDateString()}</div>
-                </div>
-                 ${isRush ? `<div class="field">
-                     <div class="field-label">Priority</div>
-                     <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
-                 </div>` : `<div class="field">
-                     <div class="field-label">Priority</div>
-                     <div class="field-value">${'Standard Priority'}</div>
-                 </div>`}
-              </div>` : isRush ? `
-             <div class="field">
-                 <div class="field-label">Priority</div>
-                 <div class="field-value"><span style="background: #dc2626; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">RUSH ORDER</span></div>
-             </div>` : ''}
-        </div>
-
-        <div class="section">
-            <div class="section-title">🎼 Track List / Order</div>
-            <div class="track-list">
-                ${tracks.map((track, i) => `
-                <div class="track-item">
-                    <span class="track-number">${i + 1}.</span> ${track.title}
-                    ${hasISRCs && track.isrc ? `<br><small style="color: #6b7280;">ISRC: ${formatISRCDisplay(track.isrc)}</small>` : ''}
-                </div>`).join('')}
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">📁 Project Files</div>
-            ${mixFiles.filter(file => file.url).map((file, i) => `
-            <div style="margin-bottom: 12px;">
-                <div class="field-label">File ${i + 1}</div>
-                <div class="field-value">
-                    <a href="${file.url}" class="file-link" target="_blank">${file.url}</a>
-                    ${file.description ? `<br><small style="color: #6b7280;">${file.description}</small>` : ''}
-                </div>
-            </div>`).join('')}
-        </div>
-
-        <div class="section">
-            <div class="section-title">🎚️ Required Master Formats</div>
-            <div class="formats-list">
-                ${masterFormats.map(format => `<span class="format-tag">${format}</span>`).join('')}
-            </div>
-            ${extraPasses.length > 0 ? `
-            <div style="margin-top: 16px;">
-                <div style="font-size: 16px; font-weight: 500; color: #111827; margin-bottom: 8px;">Extra Passes</div>
-                <div class="formats-list">
-                    ${extraPasses.map(pass => `<span class="format-tag">${pass}</span>`).join('')}
-                </div>
-            </div>` : ''}
-            ${hasISRCs ? '<p style="margin-top: 12px; font-size: 14px; color: #6b7280;">✓ Client has ISRC codes to embed</p>' : ''}
-        </div>
-
-         <div class="section">
-             <div class="section-title">📞 Contact Information (Queries, Master Deliveries)</div>
-            ${contacts.filter(c => c.name || c.email).map(c => `
-            <div style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 6px;">
-                <div class="field-group">
-                    <div class="field">
-                        <div class="field-label">Name</div>
-                        <div class="field-value">${c.name || 'Not provided'}</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Email</div>
-                        <div class="field-value"><a href="mailto:${c.email}" style="color: #2563eb;">${c.email || 'Not provided'}</a></div>
-                    </div>
-                </div>
-                <div class="field-group">
-                    <div class="field">
-                        <div class="field-label">Phone</div>
-                        <div class="field-value">${c.phone ? `<a href="tel:${c.phone}" style="color: #2563eb;">${c.phone}</a>` : 'Not provided'}</div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">Role</div>
-                        <div class="field-value">${c.role || 'Not specified'}</div>
-                    </div>
-                </div>
-                ${c.billTo ? '<p style="margin-top: 8px; font-size: 12px; color: #6b7280; font-weight: 500;">📧 Billing Contact</p>' : ''}
-            </div>
-            `).join('')}
-         </div>
-
-         <div class="section">
-             <div class="section-title">💳 Billing Information</div>
-             <div class="field-group">
-                 <div class="field">
-                     <div class="field-label">Billing Name</div>
-                     <div class="field-value">${billingInfo.name || 'Not provided'}</div>
-                 </div>
-                 <div class="field">
-                     <div class="field-label">Billing Email</div>
-                     <div class="field-value">${billingInfo.email ? `<a href="mailto:${billingInfo.email}" style="color: #2563eb;">${billingInfo.email}</a>` : 'Not provided'}</div>
-                 </div>
-                 <div class="field">
-                     <div class="field-label">Company</div>
-                     <div class="field-value">${billingInfo.company || 'Not provided'}</div>
-                 </div>
-             </div>
-         </div>
-
-        ${projectNotes ? `
-        <div class="section">
-            <div class="section-title">📝 Additional Notes</div>
-            <div class="field-value" style="white-space: pre-wrap;">${projectNotes}</div>
-        </div>` : ''}
-
-        <div class="footer">
-            <p>Submitted via LC Mastering Request Form<br>
-            ${new Date().toLocaleString()}</p>
-        </div>
-    </div>
-</body>
-</html>`;
-
-      // Prepare EmailJS template parameters - simplified format
-      const templateParams = {
-        to_email: 'lachlanjc@gmail.com',
-        from_name: artist,
-        subject: `New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`,
-        
-        // Main content fields for EmailJS template
-        artist: artist,
-        project_title: title || 'N/A',
-        project_type: projectType.toUpperCase(),
-        num_tracks: numTracks,
-        contacts_info: contacts.filter(c => c.name || c.email).map(c => 
-          `${c.name || 'No Name'} - ${c.email || 'No Email'} - ${c.phone || 'No Phone'} - ${c.role || 'No Role'}${c.billTo ? ' (Bill To)' : ''}`
-        ).join('\n'),
-        billing_info: billingInfo.name || billingInfo.email || billingInfo.company ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}` : 'No billing information provided',
-        deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
-        priority: isRush ? 'RUSH ORDER' : '',
-        standard: isRush ? '' : 'Standard Priority',
-        master_formats: masterFormats.join(', '),
-        extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
-        tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
-        file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}${f.description ? ` - ${f.description}` : ''}`).join('\n'),
-        notes: projectNotes || 'None',
-        has_isrc: hasISRCs ? 'Yes - Client has ISRC codes to embed' : 'No',
-        submission_date: new Date().toLocaleString()
-      };
-
-      // Send email via EmailJS
-      console.log("EmailJS Credentials:", {
-        serviceId: 'service_oi7xq61',
-        templateId: 'template_fo3ohen', 
-        publicKey: 'uImkSaSkdRPL1Sk0v'
-      });
-      
-      await emailjs.send(
-        'service_oi7xq61', // Your EmailJS service ID
-        'template_fo3ohen', // Your EmailJS template ID
-        templateParams,
-        'uImkSaSkdRPL1Sk0v' // Your correct EmailJS public key
-      );
-
-        toast({
-          title: "Emailed to LC",
-        });
-
-      // Log for backup
-      console.log("=== MASTERING REQUEST SENT ===");
-      console.log("HTML Content:", htmlContent);
-      console.log("Template Params:", templateParams);
-      console.log("==============================");
-
-      // Reset form for new request
-      setProjectType("");
-      setArtist("");
-      setTitle("");
-      setNumTracks(1);
-      setTracks([]);
-      setMixFiles([{ id: "mix-1", url: "", description: "" }]);
-      setHasISRCs(false);
-      setDeadline("");
-      setIsRush(false);
-      setContacts([{ id: "contact-1", name: "", email: "", phone: "", role: "", billTo: false }]);
-      setBillingInfo({ name: "", email: "", company: "" });
-      setMasterFormats([]);
-      setExtraPasses([]);
-      setProjectNotes("");
-      setHoneypot("");
-      setHoneypot2("");
-      setHoneypot3("");
-      setErrors({});
-
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast({
-        title: "Submission failed",
-        description: "Please try again or contact us directly.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNewRequest = () => {
-    // Reset form for new request
+  const resetForm = () => {
     setProjectType("");
     setArtist("");
     setTitle("");
@@ -708,6 +424,212 @@ export function ClientIntakeForm() {
     setHoneypot2("");
     setHoneypot3("");
     setErrors({});
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Silent fail for bots
+    if (honeypot || honeypot2 || honeypot3) return;
+
+    // Rate limiting: 60s between submissions
+    const now = Date.now();
+    if (now - lastSubmissionRef.current < 60_000) {
+      toast({
+        title: "Please wait",
+        description: "You can only submit once per minute.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateForm()) {
+      toast({
+        title: "Please fix the errors below",
+        description: "All required fields must be completed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // 1. Persist to Supabase first — if this fails, nothing is sent
+      const { data: insertData, error: dbError } = await supabase
+        .from('intake_submissions')
+        .insert({
+          user_id: user!.id,
+          artist,
+          project_title: title || null,
+          project_type: projectType,
+          num_tracks: numTracks,
+          tracks: tracks as unknown as never,
+          mix_files: mixFiles.map(f => ({ url: f.url, description: f.description })) as unknown as never,
+          has_isrcs: hasISRCs,
+          deadline: deadline || null,
+          is_rush: isRush,
+          contacts: contacts as unknown as never,
+          billing_info: billingInfo as unknown as never,
+          master_formats: masterFormats,
+          extra_passes: extraPasses,
+          project_notes: projectNotes || null,
+          email_sent: false,
+        })
+        .select('id')
+        .single();
+
+      if (dbError) throw new Error(`Database error: ${dbError.message}`);
+
+      // 2. Build HTML email with escaped user content
+      const e = escapeHtml;
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; color: #111827; background-color: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { background: #111827; color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 1px; }
+        .section { padding: 25px; border-bottom: 1px solid #e5e7eb; }
+        .section:last-child { border-bottom: none; }
+        .section-title { font-size: 18px; font-weight: 500; color: #111827; margin-bottom: 15px; }
+        .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .field-label { font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .field-value { font-size: 14px; color: #111827; }
+        .track-list { margin-top: 10px; }
+        .track-item { background: #f9fafb; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #111827; }
+        .track-number { font-weight: 600; color: #111827; }
+        .formats-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .format-tag { background: #111827; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .file-link { color: #2563eb; text-decoration: none; word-break: break-all; }
+        .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
+        @media (max-width: 600px) { .field-group { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LC - Mastering Request</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.8;">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+        <div class="section">
+            <div class="section-title">🎵 Project Details</div>
+            <div class="field-group">
+                <div class="field"><div class="field-label">Artist</div><div class="field-value">${e(artist)}</div></div>
+                ${title ? `<div class="field"><div class="field-label">${projectType === "ep" ? "EP" : projectType === "album" ? "Album" : "Project"} Title</div><div class="field-value">${e(title)}</div></div>` : ''}
+            </div>
+            <div class="field-group">
+                <div class="field"><div class="field-label">Project Type</div><div class="field-value">${e(projectType.toUpperCase())}</div></div>
+                <div class="field"><div class="field-label">Number of Tracks</div><div class="field-value">${numTracks}</div></div>
+            </div>
+            ${deadline ? `<div class="field-group">
+                <div class="field"><div class="field-label">Preferred Deadline</div><div class="field-value">${new Date(deadline).toLocaleDateString()}</div></div>
+                <div class="field"><div class="field-label">Priority</div><div class="field-value">${isRush ? '<span style="background:#dc2626;color:white;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold;">RUSH ORDER</span>' : 'Standard Priority'}</div></div>
+            </div>` : isRush ? `<div class="field"><div class="field-label">Priority</div><div class="field-value"><span style="background:#dc2626;color:white;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold;">RUSH ORDER</span></div></div>` : ''}
+        </div>
+        <div class="section">
+            <div class="section-title">🎼 Track List / Order</div>
+            <div class="track-list">
+                ${tracks.map((track, i) => `<div class="track-item"><span class="track-number">${i + 1}.</span> ${e(track.title)}${hasISRCs && track.isrc ? `<br><small style="color:#6b7280;">ISRC: ${e(formatISRCDisplay(track.isrc))}</small>` : ''}</div>`).join('')}
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">📁 Project Files</div>
+            ${mixFiles.filter(file => file.url).map((file, i) => `<div style="margin-bottom:12px;"><div class="field-label">File ${i + 1}</div><div class="field-value"><a href="${e(file.url)}" class="file-link" target="_blank" rel="noopener noreferrer">${e(file.url)}</a>${file.description ? `<br><small style="color:#6b7280;">${e(file.description)}</small>` : ''}</div></div>`).join('')}
+        </div>
+        <div class="section">
+            <div class="section-title">🎚️ Required Master Formats</div>
+            <div class="formats-list">${masterFormats.map(format => `<span class="format-tag">${e(format)}</span>`).join('')}</div>
+            ${extraPasses.length > 0 ? `<div style="margin-top:16px;"><div style="font-size:16px;font-weight:500;color:#111827;margin-bottom:8px;">Extra Passes</div><div class="formats-list">${extraPasses.map(pass => `<span class="format-tag">${e(pass)}</span>`).join('')}</div></div>` : ''}
+            ${hasISRCs ? '<p style="margin-top:12px;font-size:14px;color:#6b7280;">✓ Client has ISRC codes to embed</p>' : ''}
+        </div>
+        <div class="section">
+            <div class="section-title">📞 Contact Information</div>
+            ${contacts.filter(c => c.name || c.email).map(c => `<div style="margin-bottom:16px;padding:12px;background:#f9fafb;border-radius:6px;"><div class="field-group"><div class="field"><div class="field-label">Name</div><div class="field-value">${e(c.name) || 'Not provided'}</div></div><div class="field"><div class="field-label">Email</div><div class="field-value">${c.email ? `<a href="mailto:${e(c.email)}" style="color:#2563eb;">${e(c.email)}</a>` : 'Not provided'}</div></div></div><div class="field-group"><div class="field"><div class="field-label">Phone</div><div class="field-value">${c.phone ? `<a href="tel:${e(c.phone)}" style="color:#2563eb;">${e(c.phone)}</a>` : 'Not provided'}</div></div><div class="field"><div class="field-label">Role</div><div class="field-value">${e(c.role) || 'Not specified'}</div></div></div>${c.billTo ? '<p style="margin-top:8px;font-size:12px;color:#6b7280;font-weight:500;">📧 Billing Contact</p>' : ''}</div>`).join('')}
+        </div>
+        <div class="section">
+            <div class="section-title">💳 Billing Information</div>
+            <div class="field-group">
+                <div class="field"><div class="field-label">Billing Name</div><div class="field-value">${e(billingInfo.name) || 'Not provided'}</div></div>
+                <div class="field"><div class="field-label">Billing Email</div><div class="field-value">${billingInfo.email ? `<a href="mailto:${e(billingInfo.email)}" style="color:#2563eb;">${e(billingInfo.email)}</a>` : 'Not provided'}</div></div>
+                <div class="field"><div class="field-label">Company</div><div class="field-value">${e(billingInfo.company) || 'Not provided'}</div></div>
+            </div>
+        </div>
+        ${projectNotes ? `<div class="section"><div class="section-title">📝 Additional Notes</div><div class="field-value" style="white-space:pre-wrap;">${e(projectNotes)}</div></div>` : ''}
+        <div class="footer"><p>Submitted via LC Mastering Request Form<br>${new Date().toLocaleString()}</p></div>
+    </div>
+</body>
+</html>`;
+
+      // 3. Send email via EmailJS
+      const templateParams = {
+        to_email: 'lachlanjc@gmail.com',
+        from_name: artist,
+        subject: `New Mastering Request - ${artist}${title ? ` - ${title}` : ''}`,
+        artist,
+        project_title: title || 'N/A',
+        project_type: projectType.toUpperCase(),
+        num_tracks: numTracks,
+        contacts_info: contacts.filter(c => c.name || c.email).map(c =>
+          `${c.name || 'No Name'} - ${c.email || 'No Email'} - ${c.phone || 'No Phone'} - ${c.role || 'No Role'}${c.billTo ? ' (Bill To)' : ''}`
+        ).join('\n'),
+        billing_info: billingInfo.name || billingInfo.email || billingInfo.company
+          ? `${billingInfo.name || 'No Name'} - ${billingInfo.email || 'No Email'} - ${billingInfo.company || 'No Company'}`
+          : 'No billing information provided',
+        deadline: deadline ? new Date(deadline).toLocaleDateString() : 'Not specified',
+        priority: isRush ? 'RUSH ORDER' : '',
+        standard: isRush ? '' : 'Standard Priority',
+        master_formats: masterFormats.join(', '),
+        extra_passes: extraPasses.length > 0 ? extraPasses.join(', ') : 'None',
+        tracks_list: tracks.map((track, i) => `${i + 1}. ${track.title}${hasISRCs && track.isrc ? ` (ISRC: ${track.isrc})` : ''}`).join('\n'),
+        file_links: mixFiles.filter(f => f.url).map((f, i) => `${i + 1}. ${f.url}${f.description ? ` - ${f.description}` : ''}`).join('\n'),
+        notes: projectNotes || 'None',
+        has_isrc: hasISRCs ? 'Yes - Client has ISRC codes to embed' : 'No',
+        submission_date: new Date().toLocaleString(),
+      };
+
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        templateParams,
+        {
+          publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+          privateKey: import.meta.env.VITE_EMAILJS_PRIVATE_KEY,
+        }
+      );
+
+      // Mark email as sent in the database
+      await supabase
+        .from('intake_submissions')
+        .update({ email_sent: true })
+        .eq('id', insertData.id);
+
+      lastSubmissionRef.current = Date.now();
+
+      toast({ title: "Request submitted successfully!" });
+
+      setIsSubmitted(true);
+      resetForm();
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const isDbError = message.startsWith('Database error');
+      toast({
+        title: isDbError ? "Submission failed" : "Saved, but email failed",
+        description: isDbError
+          ? "Could not save your request. Please try again."
+          : "Your request was saved. Email notification may not have sent — please follow up directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNewRequest = () => {
+    resetForm();
     setIsSubmitted(false);
   };
 

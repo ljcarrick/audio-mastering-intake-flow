@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      intake_submissions: {
+        Row: {
+          id: string
+          user_id: string
+          artist: string
+          project_title: string | null
+          project_type: string
+          num_tracks: number
+          tracks: Json
+          mix_files: Json
+          has_isrcs: boolean
+          deadline: string | null
+          is_rush: boolean
+          contacts: Json
+          billing_info: Json
+          master_formats: string[]
+          extra_passes: string[]
+          project_notes: string | null
+          email_sent: boolean
+          submitted_at: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          artist: string
+          project_title?: string | null
+          project_type: string
+          num_tracks: number
+          tracks?: Json
+          mix_files?: Json
+          has_isrcs?: boolean
+          deadline?: string | null
+          is_rush?: boolean
+          contacts?: Json
+          billing_info?: Json
+          master_formats?: string[]
+          extra_passes?: string[]
+          project_notes?: string | null
+          email_sent?: boolean
+          submitted_at?: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          artist?: string
+          project_title?: string | null
+          project_type?: string
+          num_tracks?: number
+          tracks?: Json
+          mix_files?: Json
+          has_isrcs?: boolean
+          deadline?: string | null
+          is_rush?: boolean
+          contacts?: Json
+          billing_info?: Json
+          master_formats?: string[]
+          extra_passes?: string[]
+          project_notes?: string | null
+          email_sent?: boolean
+          submitted_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company: string | null
