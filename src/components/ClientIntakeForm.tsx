@@ -1,4 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
+
+// Isolated textarea so fast typing doesn't re-render the whole form
+const NotesTextarea = memo(function NotesTextarea({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [local, setLocal] = useState(value);
+  return (
+    <Textarea
+      id="notes"
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => onChange(local)}
+      rows={4}
+      className="bg-white border-gray-300 rounded-sm"
+    />
+  );
+});
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -1094,13 +1115,7 @@ export function ClientIntakeForm() {
 
                <div className="space-y-2">
                 <Label htmlFor="notes" className="text-sm font-medium text-black">Project Notes / Preferences (optional)</Label>
-                <Textarea
-                  id="notes"
-                  value={projectNotes}
-                  onChange={(e) => setProjectNotes(e.target.value)}
-                  rows={4}
-                  className="bg-white border-gray-300 rounded-sm"
-                />
+                <NotesTextarea value={projectNotes} onChange={setProjectNotes} />
               </div>
             </div>
           </div>
