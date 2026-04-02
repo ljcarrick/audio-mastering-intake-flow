@@ -1057,7 +1057,7 @@ export function ClientIntakeForm() {
                         Rush Surcharge May Apply
                       </p>
                       <p className="text-xs text-yellow-700 mt-1">
-                        We'll confirm pricing and availability for expedited delivery.
+                        We'll confirm pricing and availability for expedited delivery. Please add your deadline and any timing details in the Project Notes below.
                       </p>
                     </div>
                   </div>

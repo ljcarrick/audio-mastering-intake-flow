@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AuthNav } from '@/components/AuthNav';
-import { ArrowLeft, ExternalLink, Zap, UserPlus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Zap, UserPlus, Trash2 } from 'lucide-react';
 
 type Status = 'new' | 'in_progress' | 'delivered' | 'revision';
 
@@ -63,6 +63,7 @@ export default function Dashboard() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,6 +99,31 @@ export default function Dashboard() {
 
     setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status } : s));
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
+  };
+
+  const handleDelete = async (ids: string[]) => {
+    const { error } = await supabase
+      .from('intake_submissions')
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      toast({ title: 'Failed to delete', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setSubmissions(prev => prev.filter(s => !ids.includes(s.id)));
+    setSelectedIds(new Set());
+    if (selected && ids.includes(selected.id)) setSelected(null);
+    toast({ title: `Deleted ${ids.length} submission${ids.length !== 1 ? 's' : ''}` });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -164,6 +190,14 @@ export default function Dashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => { if (confirm('Delete this submission?')) handleDelete([s.id]); }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -352,6 +386,17 @@ export default function Dashboard() {
               </span>
             )}
           </div>
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => { if (confirm(`Delete ${selectedIds.size} submission${selectedIds.size !== 1 ? 's' : ''}?`)) handleDelete(Array.from(selectedIds)); }}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete {selectedIds.size}
+            </Button>
+          )}
           <Button size="sm" onClick={() => setShowInvite(true)} className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
             Invite Client
@@ -368,6 +413,7 @@ export default function Dashboard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
+                  <th className="py-3 px-4 w-8" />
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Artist / Project</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Submitted</th>
@@ -382,6 +428,14 @@ export default function Dashboard() {
                     className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => setSelected(s)}
                   >
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(s.id)}
+                        onChange={() => toggleSelect(s.id)}
+                        className="rounded border-gray-300"
+                      />
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-black">{s.artist}</span>
