@@ -28,7 +28,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !isInviteFlow) {
-      navigate('/');
+      navigate(user.email === import.meta.env.VITE_ADMIN_EMAIL ? '/dashboard' : '/');
     }
   }, [user, navigate, isInviteFlow]);
 
