@@ -808,98 +808,25 @@ export function ClientIntakeForm() {
                                  <Label htmlFor={`isrc-${index}`} className="text-sm font-medium text-black">
                                    ISRC Code
                                  </Label>
-                                 <div className="flex items-center space-x-2">
-                                   <div className="flex items-center space-x-1">
-                                     <Input
-                                       id={`isrc-territory-${index}`}
-                                       value={track.isrc?.slice(0, 2) || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
-                                          const currentIsrc = track.isrc || "";
-                                          const newIsrc = value + currentIsrc.slice(2);
-                                          updateTrack(index, "isrc", newIsrc);
-                                          
-                                          // Auto-tab to next field when complete
-                                          if (value.length === 2) {
-                                            const nextInput = document.getElementById(`isrc-registrant-${index}`);
-                                            if (nextInput) nextInput.focus();
-                                          }
-                                        }}
-                                       onPaste={(e) => {
-                                         e.preventDefault();
-                                         const pastedText = e.clipboardData.getData('text');
-                                         handleISRCPaste(index, pastedText);
-                                       }}
-                                        maxLength={2}
-                                        className="bg-white border-gray-300 rounded-sm w-16 text-center"
-                                     />
-                                     <span className="text-gray-400">-</span>
-                                      <Input
-                                        id={`isrc-registrant-${index}`}
-                                        value={track.isrc?.slice(2, 5) || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
-                                          const currentIsrc = track.isrc || "";
-                                          const newIsrc = currentIsrc.slice(0, 2) + value + currentIsrc.slice(5);
-                                          updateTrack(index, "isrc", newIsrc);
-                                          
-                                          // Auto-tab to next field when complete
-                                          if (value.length === 3) {
-                                            const nextInput = document.getElementById(`isrc-year-${index}`);
-                                            if (nextInput) nextInput.focus();
-                                          }
-                                        }}
-                                       onPaste={(e) => {
-                                         e.preventDefault();
-                                         const pastedText = e.clipboardData.getData('text');
-                                         handleISRCPaste(index, pastedText);
-                                       }}
-                                        maxLength={3}
-                                        className="bg-white border-gray-300 rounded-sm w-20 text-center"
-                                     />
-                                     <span className="text-gray-400">-</span>
-                                      <Input
-                                        id={`isrc-year-${index}`}
-                                        value={track.isrc?.slice(5, 7) || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
-                                          const currentIsrc = track.isrc || "";
-                                          const newIsrc = currentIsrc.slice(0, 5) + value + currentIsrc.slice(7);
-                                          updateTrack(index, "isrc", newIsrc);
-                                          
-                                          // Auto-tab to next field when complete
-                                          if (value.length === 2) {
-                                            const nextInput = document.getElementById(`isrc-designation-${index}`);
-                                            if (nextInput) nextInput.focus();
-                                          }
-                                        }}
-                                       onPaste={(e) => {
-                                         e.preventDefault();
-                                         const pastedText = e.clipboardData.getData('text');
-                                       handleISRCPaste(index, pastedText);
+                                 <div className="flex items-center gap-2 flex-wrap">
+                                   <Input
+                                     id={`isrc-${index}`}
+                                     value={track.isrc
+                                       ? [track.isrc.slice(0,2), track.isrc.slice(2,5), track.isrc.slice(5,7), track.isrc.slice(7,12)].filter(p => p).join('-')
+                                       : ''}
+                                     onChange={(e) => {
+                                       const raw = e.target.value.replace(/-/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+                                       updateTrack(index, "isrc", raw);
                                      }}
-                                      maxLength={2}
-                                      className="bg-white border-gray-300 rounded-sm w-16 text-center"
-                                   />
-                                   <span className="text-gray-400">-</span>
-                                    <Input
-                                      id={`isrc-designation-${index}`}
-                                      value={track.isrc?.slice(7, 12) || ""}
-                                      onChange={(e) => {
-                                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 5);
-                                        const currentIsrc = track.isrc || "";
-                                        const newIsrc = currentIsrc.slice(0, 7) + value;
-                                        updateTrack(index, "isrc", newIsrc);
-                                      }}
                                      onPaste={(e) => {
                                        e.preventDefault();
                                        const pastedText = e.clipboardData.getData('text');
                                        handleISRCPaste(index, pastedText);
                                      }}
-                                      maxLength={5}
-                                      className="bg-white border-gray-300 rounded-sm w-24 text-center"
+                                     placeholder="XX-XXX-XX-XXXXX"
+                                     maxLength={14}
+                                     className="bg-white border-gray-300 rounded-sm w-40 font-mono tracking-wider"
                                    />
-                                   </div>
                                    {shouldShowAutofill() && index === 0 && (
                                      <Button
                                        type="button"
@@ -1070,7 +997,7 @@ export function ClientIntakeForm() {
                   <Label className="text-sm font-medium text-black">Required Master Formats <span className={`${masterFormats.length === 0 ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
                   {errors.masterFormats && <p className="text-sm text-red-600">{errors.masterFormats}</p>}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   {["Streaming", "Vinyl", "CD", "HD Digital"].map((format) => (
                     <div key={format} className="flex items-center space-x-2">
                       <Checkbox
@@ -1094,7 +1021,7 @@ export function ClientIntakeForm() {
                  <div className="flex items-center justify-between">
                    <Label className="text-sm font-medium text-black">Extra Passes</Label>
                  </div>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                    {["Instrumental Masters", "TV Masters"].map((pass) => (
                      <div key={pass} className="flex items-center space-x-2">
                        <Checkbox
@@ -1128,7 +1055,58 @@ export function ClientIntakeForm() {
             </h2>
             
             <div className="space-y-3">
-              <div className="overflow-x-auto">
+              {/* Mobile card layout */}
+              <div className="md:hidden space-y-3">
+                {contacts.map((contact, index) => (
+                  <div key={contact.id} className="p-4 bg-gray-50 border border-gray-200 rounded-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-black">Contact {index + 1}</span>
+                      {contacts.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeContact(contact.id)} className="text-red-600 hover:text-red-800 -mr-2">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">Name <span className={`${!contact.name.trim() ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
+                        <Input value={contact.name} onChange={(e) => updateContact(contact.id, 'name', e.target.value)} placeholder="Full name" className="bg-white border-gray-300 rounded-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">Email <span className={`${!contact.email.trim() || !/\S+@\S+\.\S+/.test(contact.email) ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
+                        <Input type="email" value={contact.email} onChange={(e) => updateContact(contact.id, 'email', e.target.value)} placeholder="email@example.com" className="bg-white border-gray-300 rounded-sm" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-gray-500">Phone</Label>
+                          <Input type="tel" value={contact.phone} onChange={(e) => updateContact(contact.id, 'phone', e.target.value)} placeholder="Phone" className="bg-white border-gray-300 rounded-sm" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-gray-500">Role</Label>
+                          <Select value={contact.role} onValueChange={(value) => updateContact(contact.id, 'role', value)}>
+                            <SelectTrigger className="bg-white border-gray-300 rounded-sm">
+                              <SelectValue placeholder="Role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="artist">Artist</SelectItem>
+                              <SelectItem value="mixer">Mixer</SelectItem>
+                              <SelectItem value="producer">Producer</SelectItem>
+                              <SelectItem value="label">Label</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox checked={contact.billTo} onCheckedChange={(checked) => updateContact(contact.id, 'billTo', checked === true)} id={`bill-to-mobile-${contact.id}`} />
+                        <Label htmlFor={`bill-to-mobile-${contact.id}`} className="text-sm text-gray-700">Bill To</Label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table layout */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full border-collapse table-fixed">
                   <colgroup>
                     <col className="w-[25%]" />
@@ -1324,7 +1302,7 @@ export function ClientIntakeForm() {
             />
           </div>
 
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Button 
               type="submit" 
               size="lg" 
