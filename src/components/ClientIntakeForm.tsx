@@ -149,7 +149,7 @@ export function ClientIntakeForm() {
 
   // Handle paste across ISRC chunks
   const handleISRCPaste = (index: number, pastedText: string) => {
-    const cleanValue = pastedText.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+    const cleanValue = pastedText.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 10);
     updateTrack(index, 'isrc', cleanValue);
   };
 
@@ -812,10 +812,10 @@ export function ClientIntakeForm() {
                                    <Input
                                      id={`isrc-${index}`}
                                      value={track.isrc
-                                       ? [track.isrc.slice(0,2), track.isrc.slice(2,5), track.isrc.slice(5,7), track.isrc.slice(7,12)].filter(p => p).join('-')
+                                       ? [track.isrc.slice(0,2), track.isrc.slice(2,5), track.isrc.slice(5,10)].filter(p => p).join('-')
                                        : ''}
                                      onChange={(e) => {
-                                       const raw = e.target.value.replace(/-/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+                                       const raw = e.target.value.replace(/-/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
                                        updateTrack(index, "isrc", raw);
                                      }}
                                      onPaste={(e) => {
@@ -823,8 +823,8 @@ export function ClientIntakeForm() {
                                        const pastedText = e.clipboardData.getData('text');
                                        handleISRCPaste(index, pastedText);
                                      }}
-                                     placeholder="XX-XXX-XX-XXXXX"
-                                     maxLength={15}
+                                     placeholder="XX-XXX-XXXXX"
+                                     maxLength={12}
                                      className="bg-white border-gray-300 rounded-sm w-40 font-mono tracking-wider"
                                    />
                                    {shouldShowAutofill() && index === 0 && (
