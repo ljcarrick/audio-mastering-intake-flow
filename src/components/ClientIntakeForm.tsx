@@ -382,10 +382,6 @@ export function ClientIntakeForm() {
       newErrors.masterFormats = "At least one master format is required";
     }
 
-    // Check if at least one mix file has a URL
-    if (!mixFiles.some(file => file.url.trim())) {
-      newErrors.mixFiles = "At least one mix file link is required";
-    }
 
     // Check if honeypot fields are filled (indicates bot)
     if (honeypot || honeypot2 || honeypot3) {
@@ -411,7 +407,6 @@ export function ClientIntakeForm() {
       /\S+@\S+\.\S+/.test(billingInfo.email) &&
       tracks.every(track => track.title.trim()) &&
       masterFormats.length > 0 &&
-      mixFiles.some(file => file.url.trim()) &&
       !honeypot &&
       !honeypot2 &&
       !honeypot3
@@ -852,7 +847,7 @@ export function ClientIntakeForm() {
               {/* Mix Files */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link <span className={`${!mixFiles.some(file => file.url.trim()) ? 'text-red-500' : 'text-green-500'}`}>*</span></Label>
+                  <Label className="text-sm font-medium text-black">Dropbox/Drive Link</Label>
                   <Button
                     type="button"
                     variant="outline"
