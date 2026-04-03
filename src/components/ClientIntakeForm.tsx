@@ -659,7 +659,7 @@ export function ClientIntakeForm() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <img 
-            src="/lovable-uploads/06b3d34d-9c75-4c3e-8de4-8b0870d983bd.png" 
+            src="/logo.png"
             alt="LC - Mastering Request" 
             className="mx-auto mb-3 h-12"
           />
