@@ -824,7 +824,7 @@ export function ClientIntakeForm() {
                                        handleISRCPaste(index, pastedText);
                                      }}
                                      placeholder="XX-XXX-XX-XXXXX"
-                                     maxLength={14}
+                                     maxLength={15}
                                      className="bg-white border-gray-300 rounded-sm w-40 font-mono tracking-wider"
                                    />
                                    {shouldShowAutofill() && index === 0 && (
