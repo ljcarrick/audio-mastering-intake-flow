@@ -40,41 +40,43 @@ Deno.serve(async (req) => {
 
     const siteUrl = Deno.env.get('SITE_URL') ?? ''
 
-    // Check if user already exists
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const userExists = users.some(u => u.email === email)
+    // Try magiclink first (existing users), fall back to invite (new users)
+    let actionLink: string
+    const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { redirectTo: `${siteUrl}/` },
+    })
 
-    if (userExists) {
-      // Existing user — generate a magic link and send via Resend
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
+    if (magicError) {
+      // User doesn't exist yet — generate an invite link
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'invite',
         email,
         options: { redirectTo: `${siteUrl}/` },
       })
-      if (linkError) throw linkError
-
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Lachlan Carrick Mastering <noreply@lachlan-carrick.com>',
-          to: [email],
-          subject: "You've been invited — Lachlan Carrick Mastering",
-          html: emailHtml(linkData.properties.action_link),
-        }),
-      })
-
-      if (!resendRes.ok) throw new Error('Failed to send email')
-    } else {
-      // New user — use Supabase invite
-      const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${siteUrl}/`,
-      })
       if (inviteError) throw inviteError
+      actionLink = inviteData.properties.action_link
+    } else {
+      actionLink = magicData.properties.action_link
     }
+
+    // Send via Resend
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Lachlan Carrick Mastering <noreply@lachlan-carrick.com>',
+        to: [email],
+        subject: "You've been invited — Lachlan Carrick Mastering",
+        html: emailHtml(actionLink),
+      }),
+    })
+
+    if (!resendRes.ok) throw new Error('Failed to send email')
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
