@@ -5,6 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const emailHtml = (link: string) => `
+<div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; color: #1a1a1a;">
+  <p style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 32px;">Lachlan Carrick Mastering</p>
+  <p style="font-size: 18px; font-weight: normal; margin-bottom: 16px;">You've been invited</p>
+  <p style="font-size: 15px; color: #444; line-height: 1.6; margin-bottom: 32px;">You've been invited to submit a mastering project. Click below to access your intake form.</p>
+  <a href="${link}" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 14px; letter-spacing: 0.04em;">Get Started</a>
+  <p style="font-size: 12px; color: #aaa; margin-top: 40px; line-height: 1.6;">If you weren't expecting this, you can safely ignore it.</p>
+</div>`
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -29,10 +38,38 @@ Deno.serve(async (req) => {
     const { email } = await req.json()
     if (!email) throw new Error('Email is required')
 
-    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${Deno.env.get('SITE_URL')}/auth`,
+    const siteUrl = Deno.env.get('SITE_URL') ?? ''
+
+    // Try invite first (new users)
+    const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${siteUrl}/`,
     })
-    if (error) throw error
+
+    if (inviteError) {
+      // User already exists — generate a magic link and send via Resend
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: `${siteUrl}/` },
+      })
+      if (linkError) throw linkError
+
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Lachlan Carrick Mastering <noreply@lachlan-carrick.com>',
+          to: [email],
+          subject: "You've been invited — Lachlan Carrick Mastering",
+          html: emailHtml(linkData.properties.action_link),
+        }),
+      })
+
+      if (!resendRes.ok) throw new Error('Failed to send email')
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
