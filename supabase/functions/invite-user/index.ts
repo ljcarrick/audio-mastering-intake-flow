@@ -40,13 +40,12 @@ Deno.serve(async (req) => {
 
     const siteUrl = Deno.env.get('SITE_URL') ?? ''
 
-    // Try invite first (new users)
-    const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${siteUrl}/`,
-    })
+    // Check if user already exists
+    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+    const userExists = users.some(u => u.email === email)
 
-    if (inviteError) {
-      // User already exists — generate a magic link and send via Resend
+    if (userExists) {
+      // Existing user — generate a magic link and send via Resend
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email,
@@ -69,6 +68,12 @@ Deno.serve(async (req) => {
       })
 
       if (!resendRes.ok) throw new Error('Failed to send email')
+    } else {
+      // New user — use Supabase invite
+      const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: `${siteUrl}/`,
+      })
+      if (inviteError) throw inviteError
     }
 
     return new Response(JSON.stringify({ success: true }), {
